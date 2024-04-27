@@ -1,7 +1,14 @@
+use askama_axum::Template;
 use axum::{extract::Query, response::Html, routing::get, Router};
 use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use std::net::SocketAddr;
+
+#[derive(Template, Clone)]
+#[template(path = "hello.html")]
+struct HelloTemplate<'a> {
+    name: &'a str,
+}
 
 #[tokio::main]
 async fn main() {
@@ -10,8 +17,14 @@ async fn main() {
     // A handler is an async function which returns something that implements
     // `axum::response::IntoResponse`.
 
+    let name = "Parker";
+
     let app = Router::new()
-        .route("/hello", get(|| async { "Hello, world!" }))
+        .route("/simple", get(|| async { "Hello, there!" }))
+        .route(
+            "/hello",
+            get(|| async { HelloTemplate { name }.render().unwrap() }),
+        )
         .route("/rando", get(rando_handler))
         .route("/from-file", get(from_file_handler));
 
