@@ -4,10 +4,21 @@ use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use std::net::SocketAddr;
 
-#[derive(Template, Clone)]
+#[derive(Template, Deserialize)]
 #[template(path = "hello.html")]
-struct HelloTemplate<'a> {
-    name: &'a str,
+struct HelloTemplate {
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct PlusOneParameters {
+    before: i32,
+}
+
+#[derive(Template)]
+#[template(path = "plus1.html")]
+struct PlusOneTemplate {
+    result: i32,
 }
 
 #[tokio::main]
@@ -17,13 +28,34 @@ async fn main() {
     // A handler is an async function which returns something that implements
     // `axum::response::IntoResponse`.
 
-    let name = "Parker";
+    let name = "Jimmy";
 
     let app = Router::new()
         .route("/simple", get(|| async { "Hello, there!" }))
         .route(
             "/hello",
-            get(|| async { HelloTemplate { name }.render().unwrap() }),
+            get(HelloTemplate {
+                name: String::from(name),
+            }
+            .render()
+            .unwrap()),
+        )
+        .route(
+            "/hello2",
+            get(|x: Query<HelloTemplate>| async move {
+                HelloTemplate {
+                    name: String::from(&x.name),
+                }
+                .render()
+                .unwrap()
+            }),
+        )
+        .route(
+            "/plus1",
+            get(|params: Query<PlusOneParameters>| async move {
+                let result = params.before + 1;
+                PlusOneTemplate { result }.render().unwrap()
+            }),
         )
         .route("/rando", get(rando_handler))
         .route("/from-file", get(from_file_handler));
