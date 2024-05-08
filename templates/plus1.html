@@ -1,1 +1,13 @@
-<h1>Your number plus 1 is {{result}}.</h1>
+{% extends "base.html" %}
+
+<!-- {% block title %} -->
+<!-- {% call super() %} -->
+<!-- Plus One -->
+<!-- {% endblock %} -->
+
+{% block title %}Plus One{% endblock %}
+
+{% block content %}
+<h1 class="text-sm text-blue-500">Your number plus 1 is {{result}}.</h1>
+{% call super() %}
+{% endblock %}

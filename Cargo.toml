@@ -12,4 +12,8 @@ rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 askama = { version = "0.12.1", features = ["with-axum", "serde", "markdown"] }
 askama_axum = "0.4.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.4.0", features = ["fs", "trace"] }
 

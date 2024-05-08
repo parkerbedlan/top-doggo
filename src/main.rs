@@ -3,6 +3,10 @@ use axum::{extract::Query, response::Html, routing::get, Router};
 use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
 
 #[derive(Template, Deserialize)]
 #[template(path = "hello.html")]
@@ -23,53 +27,63 @@ struct PlusOneTemplate {
 
 #[tokio::main]
 async fn main() {
-    // Route all requests on "/" endpoint to anonymous handler.
-    //
-    // A handler is an async function which returns something that implements
-    // `axum::response::IntoResponse`.
-
     let name = "Jimmy";
 
     let app = Router::new()
         .route("/simple", get(|| async { "Hello, there!" }))
         .route(
             "/hello",
-            get(HelloTemplate {
-                name: String::from(name),
-            }
-            .render()
-            .unwrap()),
+            get(Html(
+                HelloTemplate {
+                    name: String::from(name),
+                }
+                .render()
+                .unwrap(),
+            )),
         )
         .route(
             "/hello2",
             get(|x: Query<HelloTemplate>| async move {
-                HelloTemplate {
-                    name: String::from(&x.name),
-                }
-                .render()
-                .unwrap()
+                Html(
+                    HelloTemplate {
+                        name: String::from(&x.name),
+                    }
+                    .render()
+                    .unwrap(),
+                )
             }),
         )
         .route(
             "/plus1",
             get(|params: Query<PlusOneParameters>| async move {
                 let result = params.before + 1;
-                PlusOneTemplate { result }.render().unwrap()
+                Html(PlusOneTemplate { result }.render().unwrap())
             }),
         )
         .route("/rando", get(rando_handler))
-        .route("/from-file", get(from_file_handler));
+        .route("/from-file", get(from_file_handler))
+        .nest_service(
+            "/assets",
+            ServeDir::new("assets").not_found_service(ServeFile::new("assets/index.html")),
+        );
 
     // Address that server will bind to.
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
-    println!("listening on {}", addr);
-    // Use `hyper::server::Server` which is re-exported through `axum::Server` to serve the app.
+    tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
-        // Hyper server takes a make service.
-        .serve(app.into_make_service())
+        .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
         .await
         .unwrap();
+
+    // println!("listening on {}", addr);
+    // Use `hyper::server::Server` which is re-exported through `axum::Server` to serve the app.
+    // axum::Server::bind(&addr)
+    //     // Hyper server takes a make service.
+    //     // .serve(app.into_make_service())
+    //     .serve(listener, app.layer(TraceLayer::new_for_http()))
+    //     .await
+    //     .unwrap();
 }
 
 // `Deserialize` need be implemented to use with `Query` extractor.

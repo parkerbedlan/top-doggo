@@ -1,1 +1,9 @@
-Hello, {{name}}!
+{% extends "base.html" %}
+
+{% block title %}Hello{% endblock %}
+
+{% block content %}
+<p class="flex">
+Hello,<span class="text-red-500">&nbsp;{{name}}!</span>
+</p>
+{% endblock %}
