@@ -1,4 +1,5 @@
 use askama_axum::Template;
+use axum::routing::post;
 use axum::{extract::Query, response::Html, routing::get, Router};
 use serde::Deserialize;
 use std::net::SocketAddr;
@@ -14,11 +15,31 @@ struct HomeTemplate {
 #[tokio::main]
 async fn main() {
     let count = Arc::new(Mutex::new(0));
-    let count_foo = count.clone();
+    let count_1 = count.clone();
+    let count_2 = count.clone();
 
     let app = Router::new()
-        .route("/", get(|| async { handle_index(count).await }))
-        .route("/foo", get(|| async { handle_index(count_foo).await }))
+        .route(
+            "/",
+            get(|| async {
+                async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
+                    let count = *count.lock().unwrap();
+                    Html(HomeTemplate { count }.render().unwrap())
+                }
+                f(count_1).await
+            }),
+        )
+        .route(
+            "/count",
+            post(|| async {
+                async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
+                    let mut count = *count.lock().unwrap();
+                    count += 1;
+                    Html(HomeTemplate { count }.render().unwrap())
+                }
+                f(count_2).await
+            }),
+        )
         .nest_service("/assets", ServeDir::new("assets"));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -27,11 +48,4 @@ async fn main() {
         .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
         .await
         .unwrap();
-}
-
-async fn handle_index(count: Arc<Mutex<i32>>) -> Html<String> {
-    let mut count_guard = count.lock().unwrap();
-    *count_guard += 1;
-    let count = *count_guard;
-    Html(HomeTemplate { count }.render().unwrap())
 }
