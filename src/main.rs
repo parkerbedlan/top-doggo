@@ -18,7 +18,13 @@ async fn main() {
     let app = Router::new()
         .route(
             "/",
-            get(|| async move { handle_index(count.clone()).await }),
+            get(|| async move {
+                // let count = count.clone();
+                let mut count_guard = count.lock().unwrap();
+                *count_guard += 1;
+                let count = *count_guard;
+                Html(HomeTemplate { count }.render().unwrap())
+            }),
         )
         .nest_service("/assets", ServeDir::new("assets"));
 
@@ -28,11 +34,4 @@ async fn main() {
         .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
         .await
         .unwrap();
-}
-
-async fn handle_index(count: Arc<Mutex<i32>>) -> Html<String> {
-    let mut count_guard = count.lock().unwrap();
-    *count_guard += 1;
-    let count = *count_guard;
-    Html(HomeTemplate { count }.render().unwrap())
 }
