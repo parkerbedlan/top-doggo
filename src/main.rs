@@ -1,15 +1,9 @@
 use askama_axum::Template;
-use axum::extract::RawForm;
-use axum::http::Response;
 use axum::{extract::Query, response::Html, routing::get, Router};
-use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use tower_http::{
-    services::{ServeDir, ServeFile},
-    trace::TraceLayer,
-};
+use tower_http::{services::ServeDir, trace::TraceLayer};
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -24,11 +18,7 @@ async fn main() {
     let app = Router::new()
         .route(
             "/",
-            get(|| async move {
-                let count: Arc<Mutex<i32>> = count.clone();
-                // let count_1: i32 = *count_1.lock().unwrap();
-                handle_index(count).await
-            }),
+            get(|| async move { handle_index(count.clone()).await }),
         )
         .nest_service("/assets", ServeDir::new("assets"));
 
@@ -42,11 +32,7 @@ async fn main() {
 
 async fn handle_index(count: Arc<Mutex<i32>>) -> Html<String> {
     let mut count_guard = count.lock().unwrap();
-    *count_guard += 1; // Increment the count
-    let count = *count_guard; // Retrieve the value after incrementing
+    *count_guard += 1;
+    let count = *count_guard;
     Html(HomeTemplate { count }.render().unwrap())
 }
-
-// async fn handle_index(count: i32) -> Html<String> {
-//     Html(HomeTemplate { count }.render().unwrap())
-// }
