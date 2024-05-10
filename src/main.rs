@@ -7,16 +7,20 @@ use std::sync::{Arc, Mutex};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 #[derive(Template)]
-#[template(path = "index.html")]
-struct HomeTemplate {
+#[template(path = "counter/index.html")]
+struct CounterIndexTemplate {
     count: i32,
 }
 
 #[derive(Template)]
-#[template(path = "count.html")]
+#[template(path = "counter/count.html")]
 struct CountTemplate {
     count: i32,
 }
+
+#[derive(Template)]
+#[template(path = "contacts/index.html")]
+struct ContactsIndexTemplate {}
 
 #[tokio::main]
 async fn main() {
@@ -24,13 +28,13 @@ async fn main() {
     let count_1 = count.clone();
     let count_2 = count.clone();
 
-    let app = Router::new()
+    let counter_routes = Router::new()
         .route(
-            "/",
+            "/count",
             get(|| async {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
                     let count = count.lock().unwrap();
-                    Html(HomeTemplate { count: *count }.render().unwrap())
+                    Html(CounterIndexTemplate { count: *count }.render().unwrap())
                 }
                 f(count_1).await
             }),
@@ -46,8 +50,23 @@ async fn main() {
                 }
                 f(count_2).await
             }),
-        )
-        .nest_service("/assets", ServeDir::new("assets"));
+        );
+
+    let contacts_routes = Router::new().route(
+        "/contacts",
+        get(|| async {
+            async fn f() -> Html<String> {
+                Html(ContactsIndexTemplate {}.render().unwrap())
+            }
+            f().await
+        }),
+    );
+
+    // https://docs.rs/axum/latest/axum/routing/struct.Router.html#method.nest
+    let app = Router::new()
+        .nest("/", counter_routes)
+        .nest("/", contacts_routes)
+        .nest_service("/", ServeDir::new("assets"));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::debug!("listening on {}", addr);
