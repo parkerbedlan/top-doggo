@@ -11,4 +11,4 @@ watch:
 w: watch
 
 dev:
-    tmux new-session -d -s dev_session \; send-keys 'just tww' Enter \; new-window \; send-keys 'just w' Enter \; attach-session -t dev_session
+    tmux new-session -d -s dev_session \; send-keys 'just tww' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; attach-session -t dev_session

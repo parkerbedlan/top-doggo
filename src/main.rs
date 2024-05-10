@@ -1,21 +1,36 @@
 use askama_axum::Template;
+use axum::extract::RawForm;
+use axum::http::Response;
 use axum::{extract::Query, response::Html, routing::get, Router};
 use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
 
+#[derive(Template)]
+#[template(path = "index.html")]
+struct HomeTemplate {
+    count: i32,
+}
+
 #[tokio::main]
 async fn main() {
+    let count = Arc::new(Mutex::new(0));
+
     let app = Router::new()
-        .nest_service(
-            "/assets",
-            ServeDir::new("assets").not_found_service(ServeFile::new("assets/index.html")),
+        .route(
+            "/",
+            get(|| async move {
+                let count_1: Arc<Mutex<i32>> = count.clone();
+                // let count_1: i32 = *count_1.lock().unwrap();
+                handle_index(count_1).await
+            }),
         )
-        .route("/simple", get(|| async { "Hello, there!" }));
+        .nest_service("/assets", ServeDir::new("assets"));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::debug!("listening on {}", addr);
@@ -24,3 +39,14 @@ async fn main() {
         .await
         .unwrap();
 }
+
+async fn handle_index(count: Arc<Mutex<i32>>) -> Html<String> {
+    let mut count_guard = count.lock().unwrap();
+    *count_guard += 1; // Increment the count
+    let count = *count_guard; // Retrieve the value after incrementing
+    Html(HomeTemplate { count }.render().unwrap())
+}
+
+// async fn handle_index(count: i32) -> Html<String> {
+//     Html(HomeTemplate { count }.render().unwrap())
+// }
