@@ -12,6 +12,12 @@ struct HomeTemplate {
     count: i32,
 }
 
+#[derive(Template)]
+#[template(path = "count.html")]
+struct CountTemplate {
+    count: i32,
+}
+
 #[tokio::main]
 async fn main() {
     let count = Arc::new(Mutex::new(0));
@@ -36,7 +42,7 @@ async fn main() {
                     let mut count = count.lock().unwrap();
                     *count += 1;
                     // Html(count.to_string())
-                    Html(HomeTemplate { count: *count }.render().unwrap())
+                    Html(CountTemplate { count: *count }.render().unwrap())
                 }
                 f(count_2).await
             }),
