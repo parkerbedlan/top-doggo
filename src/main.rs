@@ -25,9 +25,9 @@ async fn main() {
         .route(
             "/",
             get(|| async move {
-                let count_1: Arc<Mutex<i32>> = count.clone();
+                let count: Arc<Mutex<i32>> = count.clone();
                 // let count_1: i32 = *count_1.lock().unwrap();
-                handle_index(count_1).await
+                handle_index(count).await
             }),
         )
         .nest_service("/assets", ServeDir::new("assets"));
