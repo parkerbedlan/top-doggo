@@ -23,8 +23,8 @@ async fn main() {
             "/",
             get(|| async {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
-                    let count = *count.lock().unwrap();
-                    Html(HomeTemplate { count }.render().unwrap())
+                    let count = count.lock().unwrap();
+                    Html(HomeTemplate { count: *count }.render().unwrap())
                 }
                 f(count_1).await
             }),
@@ -33,9 +33,9 @@ async fn main() {
             "/count",
             post(|| async {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
-                    let mut count = *count.lock().unwrap();
-                    count += 1;
-                    Html(HomeTemplate { count }.render().unwrap())
+                    let mut count = count.lock().unwrap();
+                    *count += 1;
+                    Html(count.to_string())
                 }
                 f(count_2).await
             }),
