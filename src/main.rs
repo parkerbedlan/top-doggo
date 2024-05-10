@@ -35,7 +35,8 @@ async fn main() {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
                     let mut count = count.lock().unwrap();
                     *count += 1;
-                    Html(count.to_string())
+                    // Html(count.to_string())
+                    Html(HomeTemplate { count: *count }.render().unwrap())
                 }
                 f(count_2).await
             }),

@@ -4,7 +4,7 @@
 
 <div class="min-h-screen flex flex-col items-center justify-center gap-4">
     <h1 class="text-5xl">Count {{count}}</h1>
-    <button hx-post="/count" class="btn">
+    <button hx-post="/count" hx-target="body" class="btn">
         Increment
     </button>
 </div>
