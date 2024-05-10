@@ -1,6 +1,12 @@
 use askama_axum::Template;
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::routing::post;
-use axum::{extract::Form, response::Html, routing::get, Router};
+use axum::{
+    extract::Form,
+    response::{Html, IntoResponse},
+    routing::get,
+    Router,
+};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -22,6 +28,13 @@ struct CountTemplate {
 #[template(path = "contacts/index.html")]
 struct ContactsIndexTemplate {
     contacts: Vec<Contact>,
+}
+
+#[derive(Template)]
+#[template(path = "contacts/create-contact-form.html")]
+struct CreateContactFormTemplate {
+    name_error: String,
+    email_error: String,
 }
 
 #[derive(Template, Clone)]
@@ -84,7 +97,7 @@ async fn main() {
         .route(
             "/contacts",
             get(|| async {
-                async fn f(contacts: Arc<Mutex<Vec<Contact>>>) -> Html<String> {
+                async fn f(contacts: Arc<Mutex<Vec<Contact>>>) -> impl IntoResponse {
                     let contacts = contacts.lock().unwrap();
                     let contacts = contacts.to_vec();
                     Html(ContactsIndexTemplate { contacts }.to_string())
@@ -98,14 +111,46 @@ async fn main() {
                 async fn f(
                     new_contact: Contact,
                     contacts: Arc<Mutex<Vec<Contact>>>,
-                ) -> Html<String> {
+                ) -> impl IntoResponse {
                     let mut contacts = contacts.lock().unwrap();
+
+                    if contacts.iter().any(|c| c.email == new_contact.email) {
+                        // https://htmx.org/reference/#response_headers
+                        // https://docs.rs/axum/latest/axum/response/index.html
+                        // https://docs.rs/http/latest/http/header/struct.HeaderMap.html
+                        let mut headers = HeaderMap::new();
+                        headers.insert("HX-Reswap", HeaderValue::from_static("outerHTML"));
+                        headers.insert(
+                            "HX-Retarget",
+                            HeaderValue::from_static("#create-contact-form"),
+                        );
+
+                        return (
+                            // StatusCode::UNPROCESSABLE_ENTITY,
+                            // StatusCode::OK,
+                            headers,
+                            // Html("Email already exists".to_string()),
+                            Html(
+                                CreateContactFormTemplate {
+                                    name_error: "".to_string(),
+                                    email_error: "Email already exists".to_string(),
+                                }
+                                .to_string(),
+                            ),
+                        );
+                    }
+
                     contacts.push(new_contact.clone());
-                    Html(
-                        ContactTemplate {
-                            contact: new_contact,
-                        }
-                        .to_string(),
+
+                    (
+                        // StatusCode::OK,
+                        HeaderMap::new(),
+                        Html(
+                            ContactTemplate {
+                                contact: new_contact,
+                            }
+                            .to_string(),
+                        ),
                     )
                 }
                 f(new_contact, contacts_2).await

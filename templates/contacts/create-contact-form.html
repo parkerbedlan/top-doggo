@@ -1,11 +1,14 @@
-<form hx-post="/contacts" hx-target="#contacts-table" hx-swap="beforeend" class="flex flex-col gap-4 items-center">
+<form id="create-contact-form" hx-post="/contacts" hx-target="#contacts-table" hx-swap="beforeend"
+    class="flex flex-col gap-4 items-center">
     <div>
-        <label for="name" class="label">Name</label>
-        <input type="text" id="name" name="name" placeholder="John Doe" class="input input-bordered" />
+        <label for="name" class="label label-text">Name</label>
+        <input type="text" id="name" name="name" placeholder="John Doe" class="input input-bordered {% if name_error.len() > 0 %} input-error {% endif %}" />
+        <label for="name" class="label label-text-alt text-error">{{name_error}}</label>
     </div>
     <div>
         <label for="email" class="label">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="johndoe@example.com" class="input input-bordered" />
+        <input type="email" id="email" name="email" placeholder="johndoe@example.com" class="input input-bordered {% if email_error.len() > 0 %} input-error {% endif %}" />
+        <label for="name" class="label label-text-alt text-error">{{email_error}}</label>
     </div>
     <button type="submit" class="btn">Submit</button>
 </form>
