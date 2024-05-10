@@ -1,6 +1,6 @@
 use askama_axum::Template;
 use axum::routing::post;
-use axum::{extract::Query, response::Html, routing::get, Router};
+use axum::{extract::Form, response::Html, routing::get, Router};
 use serde::Deserialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -20,7 +20,21 @@ struct CountTemplate {
 
 #[derive(Template)]
 #[template(path = "contacts/index.html")]
-struct ContactsIndexTemplate {}
+struct ContactsIndexTemplate {
+    contacts: Vec<Contact>,
+}
+
+#[derive(Template, Clone)]
+#[template(path = "contacts/contact.html")]
+struct ContactTemplate {
+    contact: Contact,
+}
+
+#[derive(Clone, Deserialize)]
+struct Contact {
+    name: String,
+    email: String,
+}
 
 #[tokio::main]
 async fn main() {
@@ -34,7 +48,7 @@ async fn main() {
             get(|| async {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
                     let count = count.lock().unwrap();
-                    Html(CounterIndexTemplate { count: *count }.render().unwrap())
+                    Html(CounterIndexTemplate { count: *count }.to_string())
                 }
                 f(count_1).await
             }),
@@ -46,21 +60,57 @@ async fn main() {
                     let mut count = count.lock().unwrap();
                     *count += 1;
                     // Html(count.to_string())
-                    Html(CountTemplate { count: *count }.render().unwrap())
+                    Html(CountTemplate { count: *count }.to_string())
                 }
                 f(count_2).await
             }),
         );
 
-    let contacts_routes = Router::new().route(
-        "/contacts",
-        get(|| async {
-            async fn f() -> Html<String> {
-                Html(ContactsIndexTemplate {}.render().unwrap())
-            }
-            f().await
-        }),
-    );
+    // let contacts = Arc::new(Mutex::new(Vec::<Contact>::new()));
+    let contacts = Arc::new(Mutex::new(vec![
+        Contact {
+            name: "John Doe".to_string(),
+            email: "johndoe@example.com".to_string(),
+        },
+        Contact {
+            name: "Jane Doe".to_string(),
+            email: "janedoe@example.com".to_string(),
+        },
+    ]));
+    let contacts_1 = contacts.clone();
+    let contacts_2 = contacts.clone();
+
+    let contacts_routes = Router::new()
+        .route(
+            "/contacts",
+            get(|| async {
+                async fn f(contacts: Arc<Mutex<Vec<Contact>>>) -> Html<String> {
+                    let contacts = contacts.lock().unwrap();
+                    let contacts = contacts.to_vec();
+                    Html(ContactsIndexTemplate { contacts }.to_string())
+                }
+                f(contacts_1).await
+            }),
+        )
+        .route(
+            "/contacts",
+            post(|Form(new_contact): Form<Contact>| async {
+                async fn f(
+                    new_contact: Contact,
+                    contacts: Arc<Mutex<Vec<Contact>>>,
+                ) -> Html<String> {
+                    let mut contacts = contacts.lock().unwrap();
+                    contacts.push(new_contact.clone());
+                    Html(
+                        ContactTemplate {
+                            contact: new_contact,
+                        }
+                        .to_string(),
+                    )
+                }
+                f(new_contact, contacts_2).await
+            }),
+        );
 
     // https://docs.rs/axum/latest/axum/routing/struct.Router.html#method.nest
     let app = Router::new()

@@ -1,3 +1,11 @@
-<form>
-    Hello, world!
+<form hx-post="/contacts" hx-target="#contacts-table" hx-swap="beforeend" class="flex flex-col gap-4 items-center">
+    <div>
+        <label for="name" class="label">Name</label>
+        <input type="text" id="name" name="name" placeholder="John Doe" class="input input-bordered" />
+    </div>
+    <div>
+        <label for="email" class="label">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="johndoe@example.com" class="input input-bordered" />
+    </div>
+    <button type="submit" class="btn">Submit</button>
 </form>
