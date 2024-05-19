@@ -10,5 +10,8 @@ watch:
     cargo watch -x run
 w: watch
 
+fix:
+    cargo watch -x fix
+
 dev:
     tmux new-session -d -s dev_session \; send-keys 'vim .' Enter \; new-window \; send-keys 'just tww' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; attach-session -t dev_session
