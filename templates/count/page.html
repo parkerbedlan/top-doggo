@@ -4,8 +4,9 @@
 
 {% block content %}
 <div class="flex items-center gap-4">
-    <div>Count {{count}}</div>
-    <button class="btn" hx-post="/count/increment" hx-target="body">
+    <div class="flex">Count&nbsp;<div id="count">{{count}}</div>
+    </div>
+    <button class="btn" hx-post="/count/increment" hx-target="#count">
         Increment
     </button>
 </div>

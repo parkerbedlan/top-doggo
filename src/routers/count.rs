@@ -34,7 +34,7 @@ pub fn count_router() -> Router {
                 async fn f(count: Arc<Mutex<i32>>) -> Html<String> {
                     let mut count = count.lock().unwrap();
                     *count += 1;
-                    Html(CountTemplate { count: *count }.to_string())
+                    Html((*count).to_string())
                 }
                 f(count_2).await
             }),
