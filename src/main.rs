@@ -9,6 +9,7 @@ async fn main() {
     let app = Router::new()
         .nest("/hello", routers::hello())
         .nest("/count", routers::count())
+        .nest("/foo", routers::foo())
         .nest_service("/", ServeDir::new("assets"));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
