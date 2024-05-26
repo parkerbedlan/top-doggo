@@ -1,0 +1,16 @@
+{% macro contact(name, email) %}
+<tr id="contact-row-{{name}}">
+    <td>{{name}}</td>
+    <td>{{email}}</td>
+    <td>
+        {% call delete_button(name) %}
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro delete_button(name) %}
+<button hx-delete="/contacts?name={{name}}" hx-target="#contact-row-{{contact.name}}" hx-swap="outerHTML"
+    class="btn btn-error btn-sm aspect-square text-white p-0">{% include
+    "contacts/delete_icon.html"
+    %}</button>
+{% endmacro %}

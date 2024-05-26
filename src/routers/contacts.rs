@@ -1,9 +1,9 @@
 use askama_axum::Template;
 use axum::{
-    extract::Form,
+    extract::{Form, Query},
     http::StatusCode,
     response::{Html, IntoResponse},
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use serde::Deserialize;
@@ -48,6 +48,11 @@ fn empty_form_data() -> FormTemplate {
     }
 }
 
+#[derive(Deserialize)]
+struct DeleteContactQueryParams {
+    name: String,
+}
+
 pub fn contacts_router() -> Router {
     let contacts: Arc<Mutex<Vec<Contact>>> = Arc::new(Mutex::new(vec![Contact {
         name: "Jeff".to_string(),
@@ -55,6 +60,7 @@ pub fn contacts_router() -> Router {
     }]));
     let contacts_1 = contacts.clone();
     let contacts_2 = contacts.clone();
+    let contacts_3 = contacts.clone();
 
     Router::new()
         .route(
@@ -143,6 +149,26 @@ pub fn contacts_router() -> Router {
                         );
                     }
 
+                    if contacts.iter().any(|c| c.name == new_contact.name) {
+                        return (
+                            StatusCode::UNPROCESSABLE_ENTITY,
+                            Html(
+                                FormTemplate {
+                                    email: FormField {
+                                        value: new_contact.email,
+                                        error: "".to_string(),
+                                    },
+                                    name: FormField {
+                                        value: new_contact.name,
+                                        error: "That name is taken.".to_string(),
+                                    },
+                                    oob_contact: None,
+                                }
+                                .to_string(),
+                            ),
+                        );
+                    }
+
                     contacts.push(new_contact.clone());
                     (
                         StatusCode::OK,
@@ -156,6 +182,16 @@ pub fn contacts_router() -> Router {
                     )
                 }
                 f(contacts_2, new_contact).await
+            }),
+        )
+        .route(
+            "/",
+            delete(|Query(params): Query<DeleteContactQueryParams>| async {
+                async fn f(contacts: Arc<Mutex<Vec<Contact>>>, name: String) -> impl IntoResponse {
+                    let mut contacts = contacts.lock().unwrap();
+                    contacts.retain(|c| c.name != name);
+                }
+                f(contacts_3, params.name).await
             }),
         )
 }

@@ -1,17 +1,17 @@
+{% import "contacts/contact.html" as contact %}
+
 {% macro contacts_list(contacts) %}
 <table class="table table-pin-cols">
     <thead>
         <tr>
             <th>Name</th>
             <th>Email Address</th>
+            <th>Delete</th>
         </tr>
     </thead>
     <tbody id="contacts-table">
         {% for contact in contacts %}
-        <tr>
-            <td>{{contact.name}}</td>
-            <td>{{contact.email}}</td>
-        </tr>
+        {% call contact::contact(contact.name, contact.email) %}
         {% endfor %}
     </tbody>
 </table>

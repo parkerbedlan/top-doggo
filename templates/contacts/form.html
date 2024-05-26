@@ -1,10 +1,9 @@
+{% import "contacts/contact.html" as contact %}
+
 {% macro form(name, email, oob_contact) %}
 {% if let Some(contact) = oob_contact %}
 <tbody hx-swap-oob="beforeend:#contacts-table">
-    <tr>
-        <td>{{contact.name}}</td>
-        <td>{{contact.email}}</td>
-    </tr>
+    {% call contact::contact(contact.name, contact.email) %}
 </tbody>
 {% endif %}
 <form hx-post="/contacts">
