@@ -1,9 +1,11 @@
 {%- macro form(name, email, oob_contact) -%}
 {%- if let Some(contact) = oob_contact -%}
-<tr hx-swap-oob="beforeend:#contacts-table">
-    <td>{{contact.name}}</td>
-    <td>{{contact.email}}</td>
-</tr>
+<div hx-swap-oob="beforeend:#contacts-list" class="grid grid-cols-2">
+    <div class="grid grid-cols-2">
+        <div>{{contact.name}}</div>
+        <div>{{contact.email}}</div>
+    </div>
+</div>
 {%- endif -%}
 <form hx-post="/contacts">
     <input type="text" name="name" id="name" placeholder="Name" class="input input-bordered" value="{{name.value}}" />

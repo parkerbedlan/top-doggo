@@ -1,20 +1,16 @@
 {% macro contacts_list(contacts) %}
-<table class="table table-pin-cols">
-    <!-- <table> -->
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Email Address</th>
-        </tr>
-    </thead>
-    <tbody id="contacts-table">
-        {% for contact in contacts %}
-        <tr>
-            <td>{{contact.name}}</td>
-            <td>{{contact.email}}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div id="contacts-list" class="flex flex-col gap-2">
+    <div class="grid grid-cols-2 w-full">
+        <div class="font-bold">Name</div>
+        <div class="font-bold">Email address</div>
+    </div>
+    <hr />
+    {% for contact in contacts %}
+    <div class="grid grid-cols-2">
+        <div>{{contact.name}}</div>
+        <div>{{contact.email}}</div>
+    </div>
+    {% endfor %}
+</div>
 {% endmacro %}
 {% call contacts_list() %}
