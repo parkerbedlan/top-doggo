@@ -1,3 +1,4 @@
+{% import "./spinner.html" as spinner %}
 {% macro contact(name, email) %}
 <tr id="contact-row-{{name}}">
     <td>{{name}}</td>
@@ -9,8 +10,13 @@
 {% endmacro %}
 
 {% macro delete_button(name) %}
-<button hx-delete="/contacts?name={{name}}" hx-target="#contact-row-{{contact.name}}" hx-swap="outerHTML"
-    class="btn btn-error btn-sm aspect-square text-white p-0">{% include
-    "contacts/delete_icon.html"
-    %}</button>
+<div class="flex gap-1 items-center">
+    <button hx-indicator="#spinner-{{name}}" hx-delete="/contacts?name={{name}}"
+        hx-target="#contact-row-{{contact.name}}" hx-swap="outerHTML"
+        class="btn btn-error btn-sm aspect-square text-white p-0">{% include
+        "./delete_icon.html"
+        %}
+    </button>
+    {% call spinner::spinner(name) %}
+</div>
 {% endmacro %}
