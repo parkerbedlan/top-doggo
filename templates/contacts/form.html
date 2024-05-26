@@ -1,12 +1,12 @@
-{%- macro form(name, email, oob_contact) -%}
-{%- if let Some(contact) = oob_contact -%}
-<div hx-swap-oob="beforeend:#contacts-list" class="grid grid-cols-2">
-    <div class="grid grid-cols-2">
-        <div>{{contact.name}}</div>
-        <div>{{contact.email}}</div>
-    </div>
-</div>
-{%- endif -%}
+{% macro form(name, email, oob_contact) %}
+{% if let Some(contact) = oob_contact %}
+<tbody hx-swap-oob="beforeend:#contacts-table">
+    <tr>
+        <td>{{contact.name}}</td>
+        <td>{{contact.email}}</td>
+    </tr>
+</tbody>
+{% endif %}
 <form hx-post="/contacts">
     <input type="text" name="name" id="name" placeholder="Name" class="input input-bordered" value="{{name.value}}" />
     <label for="name" class="text-error label-text-alt">{{name.error}}</label>
@@ -17,5 +17,5 @@
         Submit
     </button>
 </form>
-{%- endmacro -%}
-{%- call form(name, email, oob_contact) -%}
+{% endmacro %}
+{% call form(name, email, oob_contact) %}
