@@ -83,6 +83,46 @@ pub fn contacts_router() -> Router {
                 ) -> impl IntoResponse {
                     let mut contacts = contacts.lock().unwrap();
 
+                    if new_contact.name == "" {
+                        return (
+                            StatusCode::UNPROCESSABLE_ENTITY,
+                            Html(
+                                FormTemplate {
+                                    email: FormField {
+                                        value: new_contact.email,
+                                        error: "".to_string(),
+                                    },
+                                    name: FormField {
+                                        value: new_contact.name,
+                                        error: "Required".to_string(),
+                                    },
+                                    oob_contact: None,
+                                }
+                                .to_string(),
+                            ),
+                        );
+                    }
+
+                    if new_contact.email == "" {
+                        return (
+                            StatusCode::UNPROCESSABLE_ENTITY,
+                            Html(
+                                FormTemplate {
+                                    email: FormField {
+                                        value: new_contact.email,
+                                        error: "Required".to_string(),
+                                    },
+                                    name: FormField {
+                                        value: new_contact.name,
+                                        error: "".to_string(),
+                                    },
+                                    oob_contact: None,
+                                }
+                                .to_string(),
+                            ),
+                        );
+                    }
+
                     if contacts.iter().any(|c| c.email == new_contact.email) {
                         return (
                             StatusCode::UNPROCESSABLE_ENTITY,
