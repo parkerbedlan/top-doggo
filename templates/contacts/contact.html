@@ -12,7 +12,7 @@
 {% macro delete_button(name) %}
 <div class="flex gap-1 items-center">
     <button hx-indicator="#spinner-{{name}}" hx-delete="/contacts?name={{name}}"
-        hx-target="#contact-row-{{contact.name}}" hx-swap="outerHTML"
+        hx-target="#contact-row-{{contact.name}}" hx-swap="outerHTML" hx-disabled-elt="this"
         class="btn btn-error btn-sm aspect-square text-white p-0">{% include
         "./delete_icon.html"
         %}

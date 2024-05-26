@@ -1419,20 +1419,12 @@ html {
   min-height: 100vh;
 }
 
-.w-4 {
-  width: 1rem;
-}
-
 .w-6 {
   width: 1.5rem;
 }
 
 .max-w-screen-2xl {
   max-width: 1536px;
-}
-
-.flex-row {
-  flex-direction: row;
 }
 
 .flex-col {
@@ -1447,6 +1439,10 @@ html {
   justify-content: center;
 }
 
+.gap-1 {
+  gap: 0.25rem;
+}
+
 .gap-4 {
   gap: 1rem;
 }
@@ -1455,17 +1451,8 @@ html {
   gap: 2rem;
 }
 
-.gap-1 {
-  gap: 0.25rem;
-}
-
 .overflow-y-auto {
   overflow-y: auto;
-}
-
-.bg-purple-500 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(168 85 247 / var(--tw-bg-opacity));
 }
 
 .p-0 {
@@ -1530,4 +1517,11 @@ html {
 
 .htmx-request.htmx-indicator {
   opacity: 1;
+}
+
+/* https://youtu.be/x7v6SNIgJpE?si=QUubqHEuChMQd9ho&t=6176 */
+
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity 500ms ease-in;
 }

@@ -6,7 +6,7 @@
     {% call contact::contact(contact.name, contact.email) %}
 </tbody>
 {% endif %}
-<form hx-post="/contacts">
+<form hx-post="/contacts" hx-disabled-elt="button, input[type='text'], input[type='email']">
     <input type="text" name="name" id="name" placeholder="Name" class="input input-bordered" value="{{name.value}}" />
     <label for="name" class="text-error label-text-alt">{{name.error}}</label>
     <input type="text" name="email" id="email" placeholder="Email Address" class="input input-bordered"

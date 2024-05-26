@@ -18,3 +18,8 @@
 .htmx-request.htmx-indicator {
   opacity: 1;
 }
+/* https://youtu.be/x7v6SNIgJpE?si=QUubqHEuChMQd9ho&t=6176 */
+.htmx-swapping {
+  opacity: 0;
+  transition: opacity 500ms ease-in;
+}
