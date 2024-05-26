@@ -6,6 +6,19 @@
     <script src="https://unpkg.com/htmx.org@1.9.11"
         integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
         crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            htmx.config.useTemplateFragments = true;
+            // https://htmx.org/events/
+            document.body.addEventListener("htmx:beforeSwap", (event) => {
+                if (event.detail.xhr.status === 422) {
+                    event.detail.shouldSwap = true;
+                    // suppresses error logging in the console
+                    event.detail.isError = false;
+                }
+            })
+        })
+    </script>
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="/output.css" />
     <title>{% block title %}Welcome{% endblock %} - Acme</title>
@@ -16,9 +29,6 @@
     <div id="content" class="max-w-screen-2xl mx-auto px-4 min-h-screen" hx-boost="true">
         {% block content %}<p>Placeholder content</p>{% endblock %}
     </div>
-    <script>
-        htmx.config.useTemplateFragments = true;
-    </script>
 </body>
 
 </html>

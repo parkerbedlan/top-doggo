@@ -1,6 +1,7 @@
 use askama_axum::Template;
 use axum::{
     extract::Form,
+    http::StatusCode,
     response::{Html, IntoResponse},
     routing::{get, post},
     Router,
@@ -83,29 +84,35 @@ pub fn contacts_router() -> Router {
                     let mut contacts = contacts.lock().unwrap();
 
                     if contacts.iter().any(|c| c.email == new_contact.email) {
-                        return Html(
-                            FormTemplate {
-                                email: FormField {
-                                    value: new_contact.email,
-                                    error: "That email is taken.".to_string(),
-                                },
-                                name: FormField {
-                                    value: new_contact.name,
-                                    error: "".to_string(),
-                                },
-                                oob_contact: None,
-                            }
-                            .to_string(),
+                        return (
+                            StatusCode::UNPROCESSABLE_ENTITY,
+                            Html(
+                                FormTemplate {
+                                    email: FormField {
+                                        value: new_contact.email,
+                                        error: "That email is taken.".to_string(),
+                                    },
+                                    name: FormField {
+                                        value: new_contact.name,
+                                        error: "".to_string(),
+                                    },
+                                    oob_contact: None,
+                                }
+                                .to_string(),
+                            ),
                         );
                     }
 
                     contacts.push(new_contact.clone());
-                    Html(
-                        FormTemplate {
-                            oob_contact: Some(new_contact),
-                            ..empty_form_data()
-                        }
-                        .to_string(),
+                    (
+                        StatusCode::OK,
+                        Html(
+                            FormTemplate {
+                                oob_contact: Some(new_contact),
+                                ..empty_form_data()
+                            }
+                            .to_string(),
+                        ),
                     )
                 }
                 f(contacts_2, new_contact).await
