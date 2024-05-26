@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% import "contacts/form.html" as form %}
+{% import "contacts/contacts_list.html" as contacts %}
+
+{% block title %}Contacts{% endblock %}
+
+{% block content %}
+{% call form::form(form_data.name, form_data.email, form_data.oob_contact) %}
+{% call contacts::contacts_list(contacts) %}
+<hr />
+{% endblock %}

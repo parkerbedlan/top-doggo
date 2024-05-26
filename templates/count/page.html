@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+<!-- sadly this isn't supported: -->
+<!-- from "count/form.html" import form -->
+{% import "count/form.html" as form %}
 
 {% block title %}Count{% endblock %}
 
@@ -10,4 +13,5 @@
         Increment
     </button>
 </div>
+{% call form::form() %}
 {% endblock %}
