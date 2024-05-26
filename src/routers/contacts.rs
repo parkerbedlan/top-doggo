@@ -81,6 +81,24 @@ pub fn contacts_router() -> Router {
                     new_contact: Contact,
                 ) -> impl IntoResponse {
                     let mut contacts = contacts.lock().unwrap();
+
+                    if contacts.iter().any(|c| c.email == new_contact.email) {
+                        return Html(
+                            FormTemplate {
+                                email: FormField {
+                                    value: new_contact.email,
+                                    error: "That email is taken.".to_string(),
+                                },
+                                name: FormField {
+                                    value: new_contact.name,
+                                    error: "".to_string(),
+                                },
+                                oob_contact: None,
+                            }
+                            .to_string(),
+                        );
+                    }
+
                     contacts.push(new_contact.clone());
                     Html(
                         FormTemplate {
