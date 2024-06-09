@@ -1,3 +1,4 @@
+use crate::AppState;
 use askama_axum::Template;
 use axum::extract::Query;
 use axum::{response::Html, routing::get, Router};
@@ -13,8 +14,8 @@ pub struct HelloNameTemplate {
     name: String,
 }
 
-pub fn hello_router() -> Router {
-    Router::new()
+pub fn hello_router() -> Router<AppState> {
+    Router::<AppState>::new()
         .route("/", get(|| async { Html(HelloTemplate {}.to_string()) }))
         .route(
             "/jimmy",

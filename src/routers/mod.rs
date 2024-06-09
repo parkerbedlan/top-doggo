@@ -9,3 +9,6 @@ pub use foo::foo_router as foo;
 
 pub mod contacts;
 pub use contacts::contacts_router as contacts;
+
+pub mod todo;
+pub use todo::todo_router as todo;

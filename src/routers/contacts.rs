@@ -1,3 +1,4 @@
+use crate::AppState;
 use askama_axum::Template;
 use axum::{
     extract::{Form, Query},
@@ -53,7 +54,7 @@ struct DeleteContactQueryParams {
     name: String,
 }
 
-pub fn contacts_router() -> Router {
+pub fn contacts_router() -> Router<AppState> {
     let contacts: Arc<Mutex<Vec<Contact>>> = Arc::new(Mutex::new(vec![Contact {
         name: "Jeff".to_string(),
         email: "jeff@example.com".to_string(),
@@ -62,7 +63,7 @@ pub fn contacts_router() -> Router {
     let contacts_2 = contacts.clone();
     let contacts_3 = contacts.clone();
 
-    Router::new()
+    Router::<AppState>::new()
         .route(
             "/",
             get(|| async {

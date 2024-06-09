@@ -1,3 +1,4 @@
+use crate::AppState;
 use askama_axum::Template;
 use axum::{
     response::Html,
@@ -12,12 +13,12 @@ struct CountTemplate {
     count: i32,
 }
 
-pub fn count_router() -> Router {
+pub fn count_router() -> Router<AppState> {
     let count = Arc::new(Mutex::new(0));
     let count_1 = count.clone();
     let count_2 = count.clone();
 
-    Router::new()
+    Router::<AppState>::new()
         .route(
             "/",
             get(|| async {

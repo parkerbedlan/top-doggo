@@ -1,4 +1,5 @@
 // use askama_axum::Template;
+use crate::AppState;
 use askama::Template;
 use axum::{response::Html, routing::get, Router};
 
@@ -13,8 +14,8 @@ struct CoolTitleTemplate {
 }
 
 // template for askama componentization
-pub fn foo_router() -> Router {
-    Router::new()
+pub fn foo_router() -> Router<AppState> {
+    Router::<AppState>::new()
         .route(
             "/",
             get(|| async {
