@@ -16,4 +16,6 @@ target/
 *.pdb
 
 ###########################
+# put in manually by me
 node_modules
+*.db*

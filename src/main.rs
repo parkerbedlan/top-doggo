@@ -18,6 +18,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
+    sqlx::migrate!("./migrations").run(&pool).await?;
+
     let app = Router::<AppState>::new()
         .nest("/hello", routers::hello())
         .nest("/count", routers::count())
