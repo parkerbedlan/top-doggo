@@ -15,7 +15,7 @@ use sqlx::prelude::FromRow;
 
 #[derive(FromRow)]
 struct Task {
-    id: u32,
+    id: i64,
     description: String,
     done: bool,
 }
@@ -32,7 +32,11 @@ pub fn todo_router() -> Router<AppState> {
         "/",
         get(|State(state): State<AppState>| async {
             async fn f(state: AppState) -> impl IntoResponse {
-                let tasks = sqlx::query_as::<_, Task>("SELECT * FROM task")
+                // let tasks = sqlx::query_as::<_, Task>("SELECT * FROM task")
+                //     .fetch_all(&state.pool)
+                //     .await
+                //     .unwrap_or(vec![]);
+                let tasks = sqlx::query_as!(Task, "SELECT * FROM task")
                     .fetch_all(&state.pool)
                     .await
                     .unwrap_or(vec![]);

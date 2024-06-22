@@ -17,4 +17,8 @@ tracing = "0.1"
 # tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.4.0", features = ["fs", "trace"] }
 sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
+    # ipnetwork feature is a thing
 dotenv = "0.15.0"
+# chrono and chrono-tz for timestamps (also sqlx has a chrono feature flag)
+    # https://youtu.be/TCERYbgvbq0?si=ivjia9CxQXD2PdLv&t=499
+
