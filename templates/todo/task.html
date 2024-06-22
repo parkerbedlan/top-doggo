@@ -1,0 +1,4 @@
+<div class="flex gap-2 w-full items-center">
+    <input id="checkbox-task-{{task.id}}" type="checkbox" {% if task.done %}checked{% endif %} />
+    <label for="checkbox-task-{{task.id}}">{{task.description}}</label>
+</div>

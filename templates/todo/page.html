@@ -3,6 +3,14 @@
 {% block title %}Todo App{% endblock %}
 
 {% block content %}
-<h1>Todo List</h1>
-<h1>Baz: {{baz}}</h1>
+<div class="flex flex-col gap-4 items-start">
+    <h1>Todo List</h1>
+    <h1>Baz: {{baz}}</h1>
+    <button class="btn">
+        click me
+    </button>
+
+    {% include "./tasks.html" %}
+</div>
+
 {% endblock %}

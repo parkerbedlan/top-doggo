@@ -1,7 +1,7 @@
 use axum::Router;
 use dotenv::dotenv;
 use sqlx::{Pool, Sqlite, SqlitePool};
-use std::{env, net::SocketAddr};
+use std::{env, error::Error, net::SocketAddr};
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 mod routers;
@@ -13,7 +13,7 @@ pub struct AppState {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
