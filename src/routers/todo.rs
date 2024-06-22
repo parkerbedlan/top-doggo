@@ -1,15 +1,12 @@
 use crate::AppState;
 use askama_axum::Template;
 use axum::{
-    extract::{Form, Query, State},
-    http::StatusCode,
+    extract::State,
     response::{Html, IntoResponse},
-    routing::{delete, get, post},
+    routing::get,
     Router,
 };
-use serde::Deserialize;
 use sqlx::prelude::FromRow;
-use std::sync::{Arc, Mutex};
 
 // struct FormField<T> {
 //     value: T,
@@ -35,9 +32,10 @@ pub fn todo_router() -> Router<AppState> {
         "/",
         get(|State(state): State<AppState>| async {
             async fn f(state: AppState) -> impl IntoResponse {
-                let q = "SELECT * FROM task";
-                let query = sqlx::query_as::<_, Task>(q);
-                let tasks = query.fetch_all(&state.pool).await.unwrap_or(vec![]);
+                let tasks = sqlx::query_as::<_, Task>("SELECT * FROM task")
+                    .fetch_all(&state.pool)
+                    .await
+                    .unwrap_or(vec![]);
                 Html(
                     TodoHomeTemplate {
                         baz: state.foo,
