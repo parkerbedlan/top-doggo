@@ -1,4 +1,6 @@
 <div class="flex gap-2 w-full items-center">
-    <input id="checkbox-task-{{task.id}}" type="checkbox" {% if task.done %}checked{% endif %} />
+    <input id="checkbox-task-{{task.id}}" type="checkbox" {% if task.done %}checked{% endif %} hx-trigger="change"
+        hx-patch="/todo" hx-vals="js:{checked: event.target.checked, id: Number(event.target.id.split('-')[2])}"
+        hx-swap="none" />
     <label for="checkbox-task-{{task.id}}">{{task.description}}</label>
 </div>
