@@ -2,18 +2,25 @@ use crate::{base, AppState};
 use axum::{
     extract::State,
     response::Html,
-    routing::{get, patch},
+    routing::{get, patch, post},
     Form, Router,
 };
 use maud::{html, Markup, Render};
 use serde::Deserialize;
 
-// struct FormField<T> {
-//     value: T,
-//     error: String,
-// }
+struct FormField<T> {
+    value: T,
+    error: String,
+}
+impl FormField<String> {
+    fn empty() -> Self {
+        Self {
+            value: "".to_string(),
+            error: "".to_string(),
+        }
+    }
+}
 
-// #[derive(FromRow)]
 struct Task {
     id: i64,
     description: String,
@@ -36,7 +43,6 @@ impl Render for Task {
                 label
                     for={"checkbox-task-" (self.id)}
                     {(self.description)}
-                div {"hi"}
             }
         }
     }
@@ -46,6 +52,42 @@ impl Render for Task {
 struct PatchTodoParams {
     id: i64,
     checked: bool,
+}
+
+#[derive(Deserialize)]
+struct PostTodoParams {
+    description: String,
+}
+
+fn create_form(description: FormField<String>) -> Markup {
+    html! {
+        form
+            hx-post="/todo"
+            hx-swap="outerHTML"
+            class="flex"
+            {
+                div
+                    class="flex flex-col"
+                    {
+                        input
+                            type="text"
+                            id="description"
+                            name="description"
+                            placeholder="New task"
+                            value=(description.value)
+                            .input .input-bordered .border-error[description.error != ""]
+                            ;
+                        label
+                            for="description"
+                            class="label-text-alt text-error"
+                            {(description.error)}
+                    }
+                button
+                    class="btn"
+                    type="submit"
+                    {"Submit"}
+            }
+    }
 }
 
 pub fn todo_router() -> Router<AppState> {
@@ -60,8 +102,16 @@ pub fn todo_router() -> Router<AppState> {
                 Html(
                     base(
                         html! {
-                            @for task in tasks.iter() {
-                                (task)
+                            div class="flex flex-col gap-8" {
+                                div
+                                    id="tasks"
+                                    class="flex flex-col gap-2"
+                                    {
+                                        @for task in tasks.iter() {
+                                            (task)
+                                        }
+                                    }
+                                (create_form(FormField::empty()))
                             }
                         },
                         None,
@@ -80,6 +130,43 @@ pub fn todo_router() -> Router<AppState> {
                         .await
                         .unwrap();
                     ()
+                },
+            ),
+        )
+        .route(
+            "/",
+            post(
+                |State(state): State<AppState>, Form(form): Form<PostTodoParams>| async move {
+                    if form.description == "" {
+                        return Html(
+                            create_form(FormField {
+                                value: form.description,
+                                error: "Required".to_string(),
+                            })
+                            .into_string(),
+                        );
+                    }
+
+                    let new_task = sqlx::query_as!(
+                        Task,
+                        "INSERT INTO task (description) VALUES ($1) RETURNING *",
+                        form.description
+                    )
+                    .fetch_one(&state.pool)
+                    .await
+                    .unwrap();
+
+                    Html(
+                        html! {
+                            (create_form(FormField::empty()))
+                            div
+                                hx-swap-oob="beforeend:#tasks"
+                                {
+                                    (new_task)
+                                }
+                        }
+                        .into_string(),
+                    )
                 },
             ),
         )
