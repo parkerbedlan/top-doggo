@@ -1,8 +1,8 @@
 use crate::{base, AppState};
 use axum::{
-    extract::State,
+    extract::{Path, State},
     response::Html,
-    routing::{get, patch, post},
+    routing::{delete, get, patch, post},
     Form, Router,
 };
 use maud::{html, Markup, Render};
@@ -31,6 +31,12 @@ impl Render for Task {
         html! {
             div class="flex gap-2 w-full items-center"
             {
+                button
+                    class="text-error"
+                    hx-delete={"/todo/" (self.id)}
+                    hx-target="closest div"
+                    hx-swap="outerHTML"
+                    {"X"}
                 input
                     id={"checkbox-task-" (self.id)}
                     type="checkbox"
@@ -167,6 +173,18 @@ pub fn todo_router() -> Router<AppState> {
                         }
                         .into_string(),
                     )
+                },
+            ),
+        )
+        .route(
+            "/:id",
+            delete(
+                |State(state): State<AppState>, Path(id): Path<i64>| async move {
+                    sqlx::query!("DELETE FROM task WHERE id=$1", id)
+                        .execute(&state.pool)
+                        .await
+                        .unwrap();
+                    ()
                 },
             ),
         )
