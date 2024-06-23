@@ -1,5 +1,0 @@
-# https://djc.github.io/askama/configuration.html
-[general]
-# Directories to search for templates, relative to the crate root.
-dirs = ["templates"]
-whitespace = "minimize"

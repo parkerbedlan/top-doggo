@@ -22,10 +22,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let app = Router::<AppState>::new()
-        .nest("/hello", routers::hello())
-        .nest("/count", routers::count())
-        .nest("/foo", routers::foo())
-        .nest("/contacts", routers::contacts())
         .nest("/todo", routers::todo())
         .nest_service("/", ServeDir::new("assets"))
         .with_state(AppState {
