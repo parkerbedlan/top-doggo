@@ -1,11 +1,11 @@
-use crate::AppState;
-use askama_axum::Template;
+use crate::{base, AppState};
 use axum::{
     extract::State,
     response::Html,
     routing::{get, patch},
     Form, Router,
 };
+use maud::{html, Markup, Render};
 use serde::Deserialize;
 
 // struct FormField<T> {
@@ -19,12 +19,27 @@ struct Task {
     description: String,
     done: bool,
 }
-
-#[derive(Template)]
-#[template(path = "todo/page.html")]
-struct TodoHomeTemplate {
-    baz: String,
-    tasks: Vec<Task>,
+impl Render for Task {
+    fn render(&self) -> Markup {
+        html! {
+            div class="flex gap-2 w-full items-center"
+            {
+                input
+                    id={"checkbox-task-" (self.id)}
+                    type="checkbox"
+                    checked[self.done]
+                    hx-trigger="change"
+                    hx-patch="/todo"
+                    hx-vals="js:{checked: event.target.checked, id: Number(event.target.id.split('-')[2])}"
+                    hx-swap="none"
+                    ;
+                label
+                    for={"checkbox-task-" (self.id)}
+                    {(self.description)}
+                div {"hi"}
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -43,11 +58,16 @@ pub fn todo_router() -> Router<AppState> {
                     .await
                     .unwrap_or(vec![]);
                 Html(
-                    TodoHomeTemplate {
-                        baz: state.foo,
-                        tasks,
-                    }
-                    .to_string(),
+                    base(
+                        html! {
+                            @for task in tasks.iter() {
+                                (task)
+                            }
+                        },
+                        None,
+                        None,
+                    )
+                    .into_string(),
                 )
             }),
         )

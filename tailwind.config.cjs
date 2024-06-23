@@ -3,7 +3,7 @@ import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
 const config = {
-  content: ["./templates/**/*.html"],
+  content: ["./templates/**/*.html", "./src/**/*.rs"],
   theme: {
     extend: {},
   },

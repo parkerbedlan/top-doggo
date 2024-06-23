@@ -1,7 +1,8 @@
-use crate::AppState;
+use crate::{base, AppState};
 use askama_axum::Template;
 use axum::extract::Query;
 use axum::{response::Html, routing::get, Router};
+use maud::html;
 use serde::Deserialize;
 
 #[derive(Template)]
@@ -16,7 +17,20 @@ pub struct HelloNameTemplate {
 
 pub fn hello_router() -> Router<AppState> {
     Router::<AppState>::new()
-        .route("/", get(|| async { Html(HelloTemplate {}.to_string()) }))
+        .route(
+            "/",
+            get(|| async {
+                Html(
+                    base(
+                        html! {div class="text-red-500 bg-blue-500" {"hello world"}
+                        },
+                        None,
+                        None,
+                    )
+                    .into_string(),
+                )
+            }),
+        )
         .route(
             "/jimmy",
             get(|| async {
