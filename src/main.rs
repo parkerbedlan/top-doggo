@@ -10,7 +10,7 @@ mod routers;
 #[derive(Clone)]
 pub struct AppState {
     pool: Pool<Sqlite>,
-    foo: String,
+    // foo: String,
 }
 
 #[tokio::main]
@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .nest_service("/", ServeDir::new("assets"))
         .with_state(AppState {
             pool,
-            foo: "bar".to_string(),
+            // foo: "bar".to_string(),
         });
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -72,6 +72,19 @@ pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Mar
         }
         body {
             div id="content" class="max-w-screen-2xl mx-auto px-4 min-h-screen" hx-boost="true" {(content)}
+        }
+    }
+}
+
+pub struct FormField<T> {
+    value: T,
+    error: String,
+}
+impl FormField<String> {
+    fn empty() -> Self {
+        Self {
+            value: "".to_string(),
+            error: "".to_string(),
         }
     }
 }
