@@ -54,11 +54,38 @@ struct Foo {
 }
 
 async fn auth<B: 'static>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
-    let foo = Foo {
-        bar: "baz".to_string(),
-    };
+    let foo_value = req
+        .headers()
+        .get(http::header::COOKIE)
+        .and_then(|cookie_header| {
+            cookie_header.to_str().ok().and_then(|cookie_str| {
+                cookie_str.split(';').find_map(|cookie| {
+                    let mut parts = cookie.trim().splitn(2, '=');
+                    if parts.next() == Some("foo") {
+                        parts.next().map(|value| value.to_string())
+                    } else {
+                        None
+                    }
+                })
+            })
+        })
+        .unwrap_or_default();
+
+    let bar = format!("{}a", foo_value);
+
+    let foo = Foo { bar: bar.clone() };
     req.extensions_mut().insert(foo);
-    Ok(next.run(req).await)
+
+    // Call next to get the response
+    let mut response = next.run(req).await;
+
+    // Set the updated cookie in the response
+    let new_cookie = format!("foo={}; Path=/", bar);
+    response
+        .headers_mut()
+        .insert(http::header::SET_COOKIE, new_cookie.parse().unwrap());
+
+    Ok(response)
 }
 
 pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {
