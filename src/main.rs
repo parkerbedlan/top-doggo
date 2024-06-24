@@ -1,4 +1,11 @@
-use axum::Router;
+use axum::{
+    extract::Extension,
+    http::{self, Request, StatusCode},
+    middleware::{self, Next},
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
 use dotenv::dotenv;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use sqlx::{Pool, Sqlite, SqlitePool};
@@ -27,16 +34,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .with_state(AppState {
             pool,
             // foo: "bar".to_string(),
-        });
+        })
+        .route_layer(middleware::from_fn(auth))
+        .layer(TraceLayer::new_for_http());
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(app.layer(TraceLayer::new_for_http()).into_make_service())
+        .serve(app.into_make_service())
         .await
         .unwrap();
 
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+struct Foo {
+    bar: String,
+}
+
+async fn auth<B: 'static>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
+    let foo = Foo {
+        bar: "baz".to_string(),
+    };
+    req.extensions_mut().insert(foo);
+    Ok(next.run(req).await)
 }
 
 pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {

@@ -1,12 +1,16 @@
-use super::{create, Task};
-use crate::{base, AppState, FormField};
+use super::Task;
+use super::create_task::new_task_form;
+use crate::{base, AppState, Foo, FormField};
 use axum::{
     extract::State,
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse}, Extension,
+    debug_handler
 };
 use maud::html;
 
-pub async fn todo_home(State(state): State<AppState>) -> impl IntoResponse {
+#[debug_handler]
+pub async fn todo_home(State(state): State<AppState>, Extension(qaz): Extension<Foo>) -> impl IntoResponse {
+    println!("{:?}", qaz);
     let tasks = sqlx::query_as!(Task, "SELECT * FROM task")
         .fetch_all(&state.pool)
         .await
@@ -23,7 +27,7 @@ pub async fn todo_home(State(state): State<AppState>) -> impl IntoResponse {
                                 (task)
                             }
                         }
-                    (create::new_task_form(FormField::empty()))
+                    (new_task_form(FormField::empty()))
                 }
             },
             None,

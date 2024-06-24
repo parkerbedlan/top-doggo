@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.6.20"
+axum = {version = "0.6.20", features = ["macros"]}
 tokio = { version = "1.37.0", features = ["full"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
@@ -18,6 +18,8 @@ sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
     # ipnetwork feature is a thing
 dotenv = "0.15.0"
 maud = { version = "0.26.0", features = ["axum"] }
+sqlx-cli = "0.7.4"
+tower-cookies = "0.10.0"
 # chrono and chrono-tz for timestamps (also sqlx has a chrono feature flag)
     # https://youtu.be/TCERYbgvbq0?si=ivjia9CxQXD2PdLv&t=499
 

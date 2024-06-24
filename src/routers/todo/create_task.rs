@@ -13,37 +13,6 @@ pub struct CreateTaskParams {
     description: String,
 }
 
-pub fn new_task_form(description: FormField<String>) -> Markup {
-    html! {
-        form
-            hx-post="/todo"
-            hx-swap="outerHTML"
-            class="flex"
-            {
-                div
-                    class="flex flex-col"
-                    {
-                        input
-                            type="text"
-                            id="description"
-                            name="description"
-                            placeholder="New task"
-                            value=(description.value)
-                            .input .input-bordered ."!border-error"[description.error != ""]
-                            ;
-                        label
-                            for="description"
-                            class="label-text-alt text-error"
-                            {(description.error)}
-                    }
-                button
-                    class="btn"
-                    type="submit"
-                    {"Submit"}
-            }
-    }
-}
-
 pub async fn create_task(
     State(state): State<AppState>,
     Form(form): Form<CreateTaskParams>,
@@ -78,4 +47,35 @@ pub async fn create_task(
         }
         .into_string(),
     )
+}
+
+pub fn new_task_form(description: FormField<String>) -> Markup {
+    html! {
+        form
+            hx-post="/todo"
+            hx-swap="outerHTML"
+            class="flex"
+            {
+                div
+                    class="flex flex-col"
+                    {
+                        input
+                            type="text"
+                            id="description"
+                            name="description"
+                            placeholder="New task"
+                            value=(description.value)
+                            .input .input-bordered ."!border-error"[description.error != ""]
+                            ;
+                        label
+                            for="description"
+                            class="label-text-alt text-error"
+                            {(description.error)}
+                    }
+                button
+                    class="btn"
+                    type="submit"
+                    {"Submit"}
+            }
+    }
 }

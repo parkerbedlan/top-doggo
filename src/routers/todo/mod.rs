@@ -1,8 +1,12 @@
-mod create;
-mod delete;
-mod read;
-mod update;
+mod create_task;
+mod delete_task;
+mod read_tasks;
+mod update_task;
 
+use self::{
+    create_task::create_task, delete_task::delete_task, read_tasks::todo_home,
+    update_task::update_task,
+};
 use crate::AppState;
 use axum::{
     routing::{delete, get},
@@ -12,13 +16,8 @@ use maud::{html, Markup, Render};
 
 pub fn todo_router() -> Router<AppState> {
     Router::<AppState>::new()
-        .route(
-            "/",
-            get(read::todo_home)
-                .post(create::create_task)
-                .patch(update::update_task),
-        )
-        .route("/:id", delete(delete::delete_task))
+        .route("/", get(todo_home).post(create_task).patch(update_task))
+        .route("/:id", delete(delete_task))
 }
 
 struct Task {
