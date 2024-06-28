@@ -1,0 +1,9 @@
+CREATE TABLE user (
+    id INTEGER PRIMARY KEY NOT NULL,
+    name TEXT UNIQUE NULL
+);
+CREATE TABLE session (
+    token TEXT PRIMARY KEY NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES "user" (id)
+);

@@ -1,16 +1,20 @@
-use super::Task;
 use super::create_task::new_task_form;
-use crate::{base, AppState, Foo, FormField};
+use super::Task;
+use crate::{base, AppContext, AppState, FormField};
 use axum::{
+    debug_handler,
     extract::State,
-    response::{Html, IntoResponse}, Extension,
-    debug_handler
+    response::{Html, IntoResponse},
+    Extension,
 };
 use maud::html;
 
 #[debug_handler]
-pub async fn todo_home(State(state): State<AppState>, Extension(qaz): Extension<Foo>) -> impl IntoResponse {
-    println!("{:?}", qaz);
+pub async fn todo_home(
+    State(state): State<AppState>,
+    Extension(context): Extension<AppContext>,
+) -> impl IntoResponse {
+    println!("{:?}", context.user_id);
     let tasks = sqlx::query_as!(Task, "SELECT * FROM task")
         .fetch_all(&state.pool)
         .await

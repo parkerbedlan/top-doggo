@@ -1,23 +1,23 @@
 use axum::{
-    extract::Extension,
+    extract::State,
     http::{self, Request, StatusCode},
     middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::get,
+    response::Response,
     Router,
 };
+use chrono::{Duration, Utc};
 use dotenv::dotenv;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
 use tower_http::{services::ServeDir, trace::TraceLayer};
+use uuid::Uuid;
 
 mod routers;
 
 #[derive(Clone)]
 pub struct AppState {
     pool: Pool<Sqlite>,
-    // foo: String,
 }
 
 #[tokio::main]
@@ -28,15 +28,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     sqlx::migrate!("./migrations").run(&pool).await?;
 
+    let state = AppState { pool };
+
     let app = Router::<AppState>::new()
         .nest("/todo", routers::todo())
         .nest_service("/", ServeDir::new("assets"))
-        .with_state(AppState {
-            pool,
-            // foo: "bar".to_string(),
-        })
-        .route_layer(middleware::from_fn(auth))
-        .layer(TraceLayer::new_for_http());
+        // .route_layer(middleware::from_fn(auth))
+        .route_layer(middleware::from_fn_with_state(state.clone(), auth))
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
@@ -49,19 +49,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[derive(Debug, Clone)]
-struct Foo {
-    bar: String,
+struct AppContext {
+    user_id: i64,
 }
 
-async fn auth<B: 'static>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
-    let foo_value = req
+const AUTH_TOKEN_COOKIE_NAME: &'static str = "best_doggo_auth_token";
+
+async fn auth<B>(
+    State(state): State<AppState>,
+    mut req: Request<B>,
+    next: Next<B>,
+) -> Result<Response, StatusCode> {
+    let original_auth_token = req
         .headers()
         .get(http::header::COOKIE)
         .and_then(|cookie_header| {
             cookie_header.to_str().ok().and_then(|cookie_str| {
                 cookie_str.split(';').find_map(|cookie| {
                     let mut parts = cookie.trim().splitn(2, '=');
-                    if parts.next() == Some("foo") {
+                    if parts.next() == Some(AUTH_TOKEN_COOKIE_NAME) {
                         parts.next().map(|value| value.to_string())
                     } else {
                         None
@@ -71,19 +77,56 @@ async fn auth<B: 'static>(mut req: Request<B>, next: Next<B>) -> Result<Response
         })
         .unwrap_or_default();
 
-    let bar = format!("{}a", foo_value);
+    let mut new_auth_token: Option<String> = None;
 
-    let foo = Foo { bar: bar.clone() };
-    req.extensions_mut().insert(foo);
+    let user_id = match sqlx::query_as!(
+        AppContext,
+        "SELECT user_id FROM session WHERE token = $1",
+        original_auth_token
+    )
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(AppContext { user_id })) => user_id,
+        _ => {
+            let new_user = sqlx::query!("INSERT INTO user DEFAULT VALUES RETURNING id")
+                .fetch_one(&state.pool)
+                .await
+                .unwrap();
+            let new_user_id = new_user.id;
 
-    // Call next to get the response
+            let new_token = Uuid::new_v4().to_string();
+            let _ = sqlx::query!(
+                "INSERT INTO session (token, user_id) VALUES ($1, $2)",
+                new_token,
+                new_user_id
+            )
+            .fetch_one(&state.pool)
+            .await;
+
+            new_auth_token = Some(new_token);
+
+            new_user_id
+        }
+    };
+
+    let app_context = AppContext { user_id };
+    req.extensions_mut().insert(app_context);
+
     let mut response = next.run(req).await;
 
-    // Set the updated cookie in the response
-    let new_cookie = format!("foo={}; Path=/", bar);
-    response
-        .headers_mut()
-        .insert(http::header::SET_COOKIE, new_cookie.parse().unwrap());
+    if let Some(token) = new_auth_token {
+        // Set the updated cookie in the response
+        let expiration = Utc::now() + Duration::days(365 * 10);
+        let expiration = expiration.format("%a, %d %b %Y %H:%M:%S GMT");
+        let new_cookie = format!(
+            "{}={}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires={}",
+            AUTH_TOKEN_COOKIE_NAME, token, expiration
+        );
+        response
+            .headers_mut()
+            .insert(http::header::SET_COOKIE, new_cookie.parse().unwrap());
+    }
 
     Ok(response)
 }

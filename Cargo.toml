@@ -18,6 +18,9 @@ sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
     # ipnetwork feature is a thing
 dotenv = "0.15.0"
 maud = { version = "0.26.0", features = ["axum"] }
+uuid = { version = "1.8.0", features = ["v4"] }
+chrono = "0.4.38"
+chrono-tz = "0.9.0"
 # sqlx-cli = "0.7.4"
 # tower-cookies = "0.9.0"
 # chrono and chrono-tz for timestamps (also sqlx has a chrono feature flag)
