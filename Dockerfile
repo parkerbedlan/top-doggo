@@ -34,6 +34,17 @@ RUN cargo build --release
 
 RUN rm -rf db
 
+# use a plain alpine image, the alpine version needs to match the builder
+FROM alpine:3.20
+# if needed, install additional dependencies here
+RUN apk add --no-cache libgcc
+# copy the binary into the final image
+COPY --from=0 /usr/src/best-doggo/target/release/best-doggo .
+COPY --from=0 /usr/src/best-doggo/.env .
+COPY --from=0 /usr/src/best-doggo/assets/ ./assets/
 EXPOSE 3000
+# set the binary as entrypoint
+CMD ["./best-doggo"]
+# ENTRYPOINT ["/best-doggo"]
 
-CMD ["./target/release/best-doggo"]
+

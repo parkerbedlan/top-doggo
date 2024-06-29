@@ -13,4 +13,6 @@ db/todos.db*
 
 justfile
 
+assets/input.css
+
 # .env
