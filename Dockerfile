@@ -1,15 +1,13 @@
+# https://github.com/kpcyrd/mini-docker-rust/blob/main/Dockerfile
 # FROM rust:latest
 # FROM rustlang/rust:nightly
 # FROM rust:1.77.2
 FROM rust:alpine3.20
 WORKDIR /usr/src/best-doggo
 
-RUN apk update && \
-    apk add --no-cache \
-    build-base \
-    musl-dev \
-    protoc
+RUN apk add --no-cache musl-dev
 
+# for nonalpine, but probably generally unnecessary
 # RUN apt-get update && apt-get install -y sqlite3 libsqlite3-dev
 # RUN sqlite3 --version
 
@@ -18,6 +16,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 RUN rm -f src/main.rs
 
+# if you wanna build the schema file in the image instead of copying it over from host machine. uses slightly more space but less steps to worry about.
 # RUN mkdir .cargo
 # RUN cargo install sqlx-cli --root .cargo
 # COPY .env ./
