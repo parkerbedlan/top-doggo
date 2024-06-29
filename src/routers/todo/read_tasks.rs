@@ -22,6 +22,8 @@ pub async fn todo_home(
     Html(
         base(
             html! {
+                h1 {"user_id: " (context.user_id)}
+                hr class="mb-4 border-black border-b" ;
                 div class="flex flex-col gap-8" {
                     div
                         id="tasks"

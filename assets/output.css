@@ -1274,6 +1274,10 @@ html {
   margin-right: auto;
 }
 
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
 .flex {
   display: flex;
 }
@@ -1306,9 +1310,30 @@ html {
   gap: 2rem;
 }
 
+.border {
+  border-width: 1px;
+}
+
+.border-b-2 {
+  border-bottom-width: 2px;
+}
+
+.border-b {
+  border-bottom-width: 1px;
+}
+
+.border-solid {
+  border-style: solid;
+}
+
 .\!border-error {
   --tw-border-opacity: 1 !important;
   border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity))) !important;
+}
+
+.border-black {
+  --tw-border-opacity: 1;
+  border-color: rgb(0 0 0 / var(--tw-border-opacity));
 }
 
 .px-4 {
