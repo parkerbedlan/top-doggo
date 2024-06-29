@@ -22,11 +22,13 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    println!("Hello, world");
+
     dotenv().ok();
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    // sqlx::migrate!("./migrations").run(&pool).await?;
 
     let state = AppState { pool };
 
@@ -38,7 +40,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -53,7 +56,7 @@ struct AppContext {
     user_id: i64,
 }
 
-const AUTH_TOKEN_COOKIE_NAME: &'static str = "best_doggo_auth_token";
+const AUTH_TOKEN_COOKIE_NAME: &str = "best_doggo_auth_token";
 
 async fn auth<B>(
     State(state): State<AppState>,

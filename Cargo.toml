@@ -11,11 +11,10 @@ tokio = { version = "1.37.0", features = ["full"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 tracing = "0.1"
-# tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-# tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.4.0", features = ["fs", "trace"] }
 sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
     # ipnetwork feature is a thing
+    # chrono feature flag is a thing https://youtu.be/TCERYbgvbq0?si=ivjia9CxQXD2PdLv&t=499
 dotenv = "0.15.0"
 maud = { version = "0.26.0", features = ["axum"] }
 uuid = { version = "1.8.0", features = ["v4"] }
@@ -23,6 +22,5 @@ chrono = "0.4.38"
 chrono-tz = "0.9.0"
 # sqlx-cli = "0.7.4"
 # tower-cookies = "0.9.0"
-# chrono and chrono-tz for timestamps (also sqlx has a chrono feature flag)
-    # https://youtu.be/TCERYbgvbq0?si=ivjia9CxQXD2PdLv&t=499
-
+# tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# tower = { version = "0.4", features = ["util"] }

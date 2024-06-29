@@ -9,5 +9,4 @@ pub async fn delete_task(State(state): State<AppState>, Path(id): Path<i64>) -> 
         .execute(&state.pool)
         .await
         .unwrap();
-    ()
 }

@@ -17,7 +17,7 @@ pub async fn create_task(
     State(state): State<AppState>,
     Form(form): Form<CreateTaskParams>,
 ) -> impl IntoResponse {
-    if form.description == "" {
+    if form.description.is_empty() {
         return Html(
             new_task_form(FormField {
                 value: form.description,

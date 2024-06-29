@@ -1,0 +1,16 @@
+target
+Dockerfile
+.dockerignore
+.git
+.gitignore
+
+node_modules
+package-lock.json
+package.json
+tailwind.config.cjs
+
+db/todos.db*
+
+justfile
+
+# .env
