@@ -9,7 +9,7 @@ package-lock.json
 package.json
 tailwind.config.cjs
 
-db/todos.db*
+db/*.db*
 
 justfile
 
