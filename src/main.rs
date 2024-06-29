@@ -31,9 +31,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let state = AppState { pool };
 
     let app = Router::<AppState>::new()
+        .nest("/", routers::home())
         .nest("/todo", routers::todo())
-        .nest_service("/", ServeDir::new("assets"))
-        // .route_layer(middleware::from_fn(auth))
+        .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
