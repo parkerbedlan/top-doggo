@@ -1,5 +1,5 @@
 services:
-  best-doggo:
+  todo-app-1:
     image: 'ghcr.io/parkerbedlan/best-doggo:0.0.15'
     volumes:
       - '/root/best-doggo-db:/db'
@@ -10,20 +10,20 @@ services:
       - coolify.version=4.0.0-beta.306
       - coolify.serviceId=1
       - coolify.type=service
-      - coolify.name=best-doggo-yk4g4gk
+      - coolify.name=todo-app-1-yk4g4gk
       - coolify.pullRequestId=0
       - coolify.service.subId=1
       - coolify.service.subType=application
       - traefik.enable=true
-      - traefik.http.routers.best-doggo.rule=Host(`todo.parkerbedlan.com`)
-      - traefik.http.routers.best-doggo.entrypoints=https
-      - traefik.http.routers.best-doggo.tls=true
-      - traefik.http.routers.best-doggo.tls.certresolver=letsencrypt
-      - traefik.http.services.best-doggo.loadbalancer.server.port=3000
+      - traefik.http.routers.todo-app-1.rule=Host(`todo.parkerbedlan.com`)
+      - traefik.http.routers.todo-app-1.entrypoints=https
+      - traefik.http.routers.todo-app-1.tls=true
+      - traefik.http.routers.todo-app-1.tls.certresolver=letsencrypt
+      - traefik.http.services.todo-app-1.loadbalancer.server.port=3000
     restart: unless-stopped
-    container_name: best-doggo-yk4g4gk
+    container_name: todo-app-1-yk4g4gk
     environment:
-      COOLIFY_CONTAINER_NAME: best-doggo-yk4g4gk
+      COOLIFY_CONTAINER_NAME: todo-app-1-yk4g4gk
 volumes: {  }
 networks:
   yk4g4gk:
