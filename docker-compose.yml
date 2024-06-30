@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  best-doggo:
+    image: parkerbedlan/best-doggo:0.0.15
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./db:/db"
+

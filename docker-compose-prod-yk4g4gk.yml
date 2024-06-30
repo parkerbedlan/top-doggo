@@ -1,0 +1,31 @@
+services:
+  best-doggo:
+    image: 'ghcr.io/parkerbedlan/best-doggo:0.0.15'
+    volumes:
+      - '/root/best-doggo-db:/db'
+    networks:
+      yk4g4gk: null
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.306
+      - coolify.serviceId=1
+      - coolify.type=service
+      - coolify.name=best-doggo-yk4g4gk
+      - coolify.pullRequestId=0
+      - coolify.service.subId=1
+      - coolify.service.subType=application
+      - traefik.enable=true
+      - traefik.http.routers.best-doggo.rule=Host(`todo.parkerbedlan.com`)
+      - traefik.http.routers.best-doggo.entrypoints=https
+      - traefik.http.routers.best-doggo.tls=true
+      - traefik.http.routers.best-doggo.tls.certresolver=letsencrypt
+      - traefik.http.services.best-doggo.loadbalancer.server.port=3000
+    restart: unless-stopped
+    container_name: best-doggo-yk4g4gk
+    environment:
+      COOLIFY_CONTAINER_NAME: best-doggo-yk4g4gk
+volumes: {  }
+networks:
+  yk4g4gk:
+    name: yk4g4gk
+    external: true
