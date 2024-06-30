@@ -123,8 +123,7 @@ async fn auth<B>(
         let expiration = Utc::now() + Duration::days(365 * 10);
         let expiration = expiration.format("%a, %d %b %Y %H:%M:%S GMT");
         let new_cookie = format!(
-            // "{}={}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires={}",
-            "{}={}; Path=/; HttpOnly; SameSite=Strict; Expires={}",
+            "{}={}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires={}",
             AUTH_TOKEN_COOKIE_NAME, token, expiration
         );
         response
