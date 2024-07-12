@@ -1,6 +1,6 @@
 services:
   todo-app-3:
-    image: 'ghcr.io/parkerbedlan/best-doggo:0.0.17'
+    image: 'ghcr.io/parkerbedlan/best-doggo:0.0.19'
     volumes:
       - '/root/todo-app-db:/db'
     networks:
