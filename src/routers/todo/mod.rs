@@ -35,6 +35,7 @@ impl Render for Task {
                     hx-delete={"/todo/" (self.id)}
                     hx-target="closest div"
                     hx-swap="outerHTML"
+                    hx-confirm={"Are you sure you want to delete " (self.description) "?"}
                     {"X"}
                 input
                     id={"checkbox-task-" (self.id)}
