@@ -1,3 +1,4 @@
+use axum::response::{Html, IntoResponse};
 use axum::ServiceExt;
 use axum::{
     extract::State,
@@ -24,8 +25,6 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("{}", Uuid::new_v4().to_string());
-
     dotenv().ok();
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
@@ -36,7 +35,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app = Router::<AppState>::new()
         .nest("/", routers::home())
-        .nest("/todo", routers::todo())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .layer(TraceLayer::new_for_http())
@@ -137,14 +135,30 @@ async fn auth<B>(
     Ok(response)
 }
 
-pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {
+pub fn base(content: Markup) -> impl IntoResponse {
+    base_with_title_and_head(content, None, None)
+}
+
+pub fn base_with_title(content: Markup, title: Option<String>) -> impl IntoResponse {
+    base_with_title_and_head(content, title, None)
+}
+
+pub fn base_with_title_and_head(
+    content: Markup,
+    title: Option<String>,
+    head: Option<Markup>,
+) -> impl IntoResponse {
+    Html(layout(content, title, head).into_string())
+}
+
+pub fn layout(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en";
         head {
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
-            script defer data-domain="todo3.parkerbedlan.com" src="https://plausible-yokscss.parkerbedlan.com/js/script.js" {}
+            script defer data-domain="doggo.parkerbedlan.com" src="https://plausible-yokscss.parkerbedlan.com/js/script.js" {}
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
             script {(PreEscaped(r#"
                         document.addEventListener("DOMContentLoaded", () => {
