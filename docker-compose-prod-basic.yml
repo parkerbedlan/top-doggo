@@ -1,9 +1,0 @@
-version: '3.8'
-services:
-  best-doggo:
-    image: 'ghcr.io/parkerbedlan/best-doggo:0.0.15'
-    ports:
-      - '3000:3000'
-    volumes:
-      - '/root/best-doggo-db:/db'
-

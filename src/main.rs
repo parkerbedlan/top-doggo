@@ -1,3 +1,4 @@
+use axum::response::{Html, IntoResponse};
 use axum::ServiceExt;
 use axum::{
     extract::State,
@@ -24,8 +25,6 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    println!("{}", Uuid::new_v4().to_string());
-
     dotenv().ok();
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
@@ -36,7 +35,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app = Router::<AppState>::new()
         .nest("/", routers::home())
-        .nest("/todo", routers::todo())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .layer(TraceLayer::new_for_http())
@@ -137,7 +135,23 @@ async fn auth<B>(
     Ok(response)
 }
 
-pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {
+pub fn base(content: Markup) -> impl IntoResponse {
+    base_with_title_and_head(content, None, None)
+}
+
+pub fn base_with_title(content: Markup, title: Option<String>) -> impl IntoResponse {
+    base_with_title_and_head(content, title, None)
+}
+
+pub fn base_with_title_and_head(
+    content: Markup,
+    title: Option<String>,
+    head: Option<Markup>,
+) -> impl IntoResponse {
+    Html(layout(content, title, head).into_string())
+}
+
+pub fn layout(content: Markup, title: Option<String>, head: Option<Markup>) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en";
