@@ -1,3 +1,4 @@
+use axum::ServiceExt;
 use axum::{
     extract::State,
     http::{self, Request, StatusCode},
@@ -10,7 +11,8 @@ use dotenv::dotenv;
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use tower_http::{normalize_path::NormalizePathLayer, services::ServeDir, trace::TraceLayer};
+use tower_layer::Layer;
 use uuid::Uuid;
 
 mod routers;
@@ -39,8 +41,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route_layer(middleware::from_fn_with_state(state.clone(), auth))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
+    // so that `/foo` and `/foo/` render the same page
+    let app = NormalizePathLayer::trim_trailing_slash().layer(app);
 
-    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)

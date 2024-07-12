@@ -11,7 +11,8 @@ tokio = { version = "1.37.0", features = ["full"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 tracing = "0.1"
-tower-http = { version = "0.4.0", features = ["fs", "trace", "normalize-path"] }
+tower-http = { version = "0.4.1", features = ["fs", "trace", "normalize-path"] }
+tower-layer = "0.3.2"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
     # ipnetwork feature is a thing
     # chrono feature flag is a thing https://youtu.be/TCERYbgvbq0?si=ivjia9CxQXD2PdLv&t=499
