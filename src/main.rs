@@ -144,7 +144,7 @@ pub fn base(content: Markup, title: Option<String>, head: Option<Markup>) -> Mar
         head {
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
-            script defer data-domain="todo3.parkerbedlan.com" src="https://plausible-yokscss.parkerbedlan.com/js/script.js" {}
+            script defer data-domain="todo3.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
             script {(PreEscaped(r#"
                         document.addEventListener("DOMContentLoaded", () => {

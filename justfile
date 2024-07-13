@@ -27,7 +27,7 @@ dev:
 # docker push ghcr.io/parkerbedlan/best-doggo:0.0.19
 
 dbuild version:
-    echo "docker build -t parkerbedlan/best-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db parkerbedlan/best-doggo:{{version}}"
+    docker build -t parkerbedlan/best-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db parkerbedlan/best-doggo:{{version}}
    
 dpush version:
-    echo "docker tag parkerbedlan/best-doggo:{{version}} ghcr.io/parkerbedlan/best-doggo:{{version}} && docker push ghcr.io/parkerbedlan/best-doggo:{{version}}"
+    docker tag parkerbedlan/best-doggo:{{version}} ghcr.io/parkerbedlan/best-doggo:{{version}} && docker push ghcr.io/parkerbedlan/best-doggo:{{version}}

@@ -1310,14 +1310,14 @@ html {
   border-bottom-width: 1px;
 }
 
-.\!border-error {
-  --tw-border-opacity: 1 !important;
-  border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity))) !important;
-}
-
 .border-black {
   --tw-border-opacity: 1;
   border-color: rgb(0 0 0 / var(--tw-border-opacity));
+}
+
+.\!border-error {
+  --tw-border-opacity: 1 !important;
+  border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity))) !important;
 }
 
 .px-4 {
