@@ -12,6 +12,9 @@ pub fn home_router() -> Router<AppState> {
                         h1 {"user_id: " (context.user_id)}
                         hr class="mb-4 border-black border-b" ;
                         h1 {"Home"}
+                        @for i in 0..101 {
+                            div {(i)}
+                        }
                     },
                     Some(1),
                 )
