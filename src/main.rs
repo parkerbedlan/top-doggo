@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let state = AppState { pool };
 
     let app = Router::<AppState>::new()
-        .nest("/home", routers::home())
+        .nest("/leaderboard", routers::leaderboard())
         .nest("/", routers::doggo())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
@@ -53,15 +53,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub struct _FormField<T> {
-    _value: T,
-    _error: String,
+pub struct FormField<T> {
+    value: T,
+    error: String,
 }
-impl _FormField<String> {
-    fn _empty() -> Self {
+impl FormField<String> {
+    fn empty() -> Self {
         Self {
-            _value: "".to_string(),
-            _error: "".to_string(),
+            value: "".to_string(),
+            error: "".to_string(),
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::{layout::base, AppContext, AppState};
 use axum::{extract::State, routing::get, Extension, Router};
 use maud::html;
 
-pub fn home_router() -> Router<AppState> {
+pub fn leaderboard_router() -> Router<AppState> {
     Router::<AppState>::new().route(
         "/",
         get(
@@ -11,7 +11,7 @@ pub fn home_router() -> Router<AppState> {
                     html! {
                         h1 {"user_id: " (context.user_id)}
                         hr class="mb-4 border-black border-b" ;
-                        h1 {"Home"}
+                        h1 {"Leaderboard"}
                         @for i in 0..101 {
                             div {(i)}
                         }

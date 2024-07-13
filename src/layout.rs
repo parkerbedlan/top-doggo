@@ -55,8 +55,8 @@ pub fn layout(
             title {(title.unwrap_or("Welcome".to_string())) " - Acme"}
             (head.unwrap_or(html!{}))
         }
-        body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen" hx-boost="true" {
-            div {(content)}
+        body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen flex flex-col" hx-boost="true" {
+            {(content)}
             (navbar(active_nav_link_index))
         }
 
@@ -68,7 +68,7 @@ fn navbar(active_nav_link_index: Option<u8>) -> Markup {
         footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-gray-200 flex justify-center items-center" {
             div class="w-full h-full flex justify-around items-center max-w-screen-lg" {
                 (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(index) = active_nav_link_index {index == 0} else {false}))
-                    (nav_link(html! {div class="text-9xl" {(trophy())}}, "/home", if let Some(index) = active_nav_link_index {index == 1} else {false}))
+                    (nav_link(html! {div class="text-9xl" {(trophy())}}, "/leaderboard", if let Some(index) = active_nav_link_index {index == 1} else {false}))
             }
         }
     }
