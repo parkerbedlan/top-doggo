@@ -6,6 +6,7 @@ use axum::{
     Extension, Form, Router,
 };
 use maud::{html, Markup, Render};
+use rand::Rng;
 use serde::Deserialize;
 
 #[derive(Debug)]
@@ -33,23 +34,54 @@ impl Render for Dog {
 }
 
 pub fn doggo_router() -> Router<AppState> {
-    Router::<AppState>::new().route(
-        "/",
-        get(
+    Router::<AppState>::new()
+        .route("/", get(
             |State(state): State<AppState>, Extension(_context): Extension<AppContext>| async move {
-                let dogs =
-                    sqlx::query_as!(Dog, "SELECT id, image_url, name FROM dog LIMIT 2 OFFSET 0")
-                        .fetch_all(&state.pool)
-                        .await
-                        .unwrap();
+                let total_dogs = sqlx::query!("SELECT COUNT(*) as count FROM dog").fetch_one(&state.pool).await.unwrap().count;
+
+                let mut dog_a: Option<Dog> = None;
+                while dog_a.is_none() {
+                    let id_a = rand::thread_rng().gen_range(1..total_dogs+1);
+
+                    let result = sqlx::query_as!(Dog,
+                        "SELECT id, image_url, name FROM dog WHERE id = $1",
+                        id_a)
+                        .fetch_one(&state.pool).await;
+                    dog_a = match result {
+                        Ok(dog) => Some(dog),
+                        Err(_) => None
+                    };
+
+                }
+                let dog_a = dog_a.unwrap();
+
+                let mut dog_b: Option<Dog> = None;
+                while dog_b.is_none() {
+                    let mut id_b: i32;
+                    while {
+                        id_b = rand::thread_rng().gen_range(1..total_dogs+1);
+
+                        id_b == dog_a.id as i32
+                    } {}
+
+                    let result = sqlx::query_as!(Dog,
+                        "SELECT id, image_url, name FROM dog WHERE id = $1",
+                        id_b)
+                        .fetch_one(&state.pool).await;
+                    dog_b = match result {
+                        Ok(dog) => Some(dog),
+                        Err(_) => None
+                    };
+                }
+                let dog_b = dog_b.unwrap();
 
                 base(
                     html! {
                         div class="flex flex-col items-center justify-center gap-6 flex-1" {
                             h1 class="text-5xl" {"Pick your favorite"}
                             div class="flex justify-center gap-6 w-full" {
-                                (dogs[0])
-                                (dogs[1])
+                                (dog_a)
+                                (dog_b)
                             }
                             div class="flex justify-center -mt-2" {
                                 button class="flex flex-col justify-center items-center gap-1 bg-gray-200 hover:bg-gray-300 active:scale-90 transition-all duration-75 rounded-md aspect-square p-8" {
@@ -76,7 +108,7 @@ pub fn doggo_router() -> Router<AppState> {
                 return err("NO, don't name him Jeff >:(");
             }
             if new_name == "" {
-                return err("Required");
+                return err("^ Type this dog's new name right up here :)");
             }
             let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", form.dog_id)
                 .fetch_optional(&state.pool).await.unwrap();
@@ -111,7 +143,16 @@ fn name_dog_form(dog_id: i64, new_name: FormField<String>) -> Markup {
                 input type="text" id={"new_name_"(dog_id)} name="new_name" placeholder="Name this dog!" class={ "input input-bordered w-full text-3xl" @if new_name.error != "" {" !border-error"} } value=(new_name.value) ;
                 label for={"new_name_"(dog_id)} class="text-lg text-error leading-tight" {(new_name.error)}
             }
-            button type="submit" class="btn text-xl" {"Submit"}
+            button type="submit" class="btn text-xl" {(tag_icon())}
+        }
+    }
+}
+
+fn tag_icon() -> Markup {
+    html! {
+        svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" {
+            path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" ;
+            path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" ;
         }
     }
 }
