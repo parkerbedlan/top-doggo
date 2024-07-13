@@ -16,6 +16,10 @@ fix:
 db:
     sqlite3 db/best-doggo.db
 
+clippy:
+    cargo clippy --fix --allow-dirty
+remove-imports: clippy
+
 dev:
     tmux new-session -d -s best-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t best-doggo
 
