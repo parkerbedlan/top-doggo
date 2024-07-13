@@ -32,9 +32,9 @@ pub fn layout(
         (DOCTYPE)
         html lang="en";
         head {
+            // script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
-            script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
             script {(PreEscaped(r#"
                         document.addEventListener("DOMContentLoaded", () => {
@@ -55,7 +55,7 @@ pub fn layout(
             title {(title.unwrap_or("Welcome".to_string())) " - Acme"}
             (head.unwrap_or(html!{}))
         }
-        body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen flex flex-col" hx-boost="true" {
+        body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen flex flex-col font-shantell" hx-boost="true" {
             {(content)}
             (navbar(active_nav_link_index))
         }

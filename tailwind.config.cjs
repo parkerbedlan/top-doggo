@@ -5,7 +5,11 @@ import forms from "@tailwindcss/forms";
 const config = {
   content: ["./templates/**/*.html", "./src/**/*.rs"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        shantell: ['"Shantell Sans"', "sans-serif"],
+      },
+    },
   },
   plugins: [require("daisyui"), forms({ strategy: "class" }), typography],
 };
