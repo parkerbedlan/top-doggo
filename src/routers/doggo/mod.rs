@@ -1,4 +1,4 @@
-use crate::{base, AppContext, AppState};
+use crate::{layout::base, AppContext, AppState};
 use axum::{extract::State, routing::get, Extension, Router};
 use maud::html;
 
