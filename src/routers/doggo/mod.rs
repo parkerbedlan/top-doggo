@@ -2,7 +2,7 @@ use crate::{base, AppContext, AppState};
 use axum::{extract::State, routing::get, Extension, Router};
 use maud::html;
 
-pub fn home_router() -> Router<AppState> {
+pub fn doggo_router() -> Router<AppState> {
     Router::<AppState>::new().route(
         "/",
         get(
@@ -11,9 +11,9 @@ pub fn home_router() -> Router<AppState> {
                     html! {
                         h1 {"user_id: " (context.user_id)}
                         hr class="mb-4 border-black border-b" ;
-                        h1 {"Home"}
+                        h1 {"doggo"}
                     },
-                    Some(1),
+                    Some(0),
                 )
             },
         ),
