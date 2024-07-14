@@ -225,8 +225,9 @@ struct NameDogFormParams {
 
 fn name_dog_form(dog_id: i64, new_name: FormField<String>) -> Markup {
     html! {
-        form class="flex gap-1 px-4" hx-patch="/name-dog" hx-swap="outerHTML" {
-            input type="hidden" name="dog_id" value=(dog_id) ;
+        // https://gist.github.com/niksumeiko/360164708c3b326bd1c8?permalink_comment_id=3925346#gistcomment-3925346
+        form class="flex gap-1 px-4" hx-patch="/name-dog" hx-swap="outerHTML" autocomplete="off" {
+            input type="hidden" name="dog_id" value=(dog_id) autocomplete="off" ;
             div class="flex flex-col" {
                 input type="text" id={"new_name_"(dog_id)} name="new_name" placeholder="Name this dog!" class={ "input input-bordered w-full text-3xl" @if new_name.error != "" {" !border-error"} } value=(new_name.value) ;
                 label for={"new_name_"(dog_id)} class="text-lg text-error leading-tight" {(new_name.error)}
