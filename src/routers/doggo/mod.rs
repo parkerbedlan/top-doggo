@@ -1,8 +1,8 @@
 use crate::{layout::base, AppContext, AppState, FormField};
 use axum::{
-    extract::State,
+    extract::{Path, State},
     response::Html,
-    routing::{get, patch},
+    routing::{get, patch, post},
     Extension, Form, Router,
 };
 use maud::{html, Markup, Render};
@@ -20,7 +20,7 @@ impl Render for Dog {
     fn render(&self) -> Markup {
         html! {
             div class="max-w-96 w-5/12 flex flex-col items-center gap-3" {
-                button class="w-full aspect-square overflow-auto bg-gray-200 hover:bg-gray-300 active:scale-95 transition-all duration-75 rounded-md p-2" {
+                button hx-post={"/pick-winner/"(self.id)} hx-target="#game-board" hx-swap="outerHTML" class="w-full aspect-square overflow-auto bg-gray-200 hover:bg-gray-300 active:scale-95 transition-all duration-75 rounded-md p-2" {
                     img class="object-center object-cover aspect-square w-full" src=(self.image_url) ;
                 }
                 @if let Some(name) = &self.name {
@@ -48,14 +48,24 @@ async fn get_dog(dog_id: i64, pool: &Pool<Sqlite>) -> Option<Dog> {
     }
 }
 
-async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> {
-    let current_dog_match = sqlx::query!(
-        "SELECT dog_a_id, dog_b_id FROM match WHERE user_id=$1 AND status='…' LIMIT 1",
+struct DogMatch {
+    id: i64,
+    dog_a_id: i64,
+    dog_b_id: i64,
+}
+async fn get_current_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<DogMatch> {
+    sqlx::query_as!(
+        DogMatch,
+        "SELECT id, dog_a_id, dog_b_id FROM match WHERE user_id=$1 AND status='…' LIMIT 1",
         user_id
     )
     .fetch_optional(pool)
     .await
-    .unwrap_or(None);
+    .unwrap_or(None)
+}
+
+async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> {
+    let current_dog_match = get_current_dog_match(user_id, pool).await;
     if let Some(dog_match) = current_dog_match {
         let dog_a = get_dog(dog_match.dog_a_id, pool).await.unwrap();
         let dog_b = get_dog(dog_match.dog_b_id, pool).await.unwrap();
@@ -109,30 +119,40 @@ async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> 
     Some((dog_a, dog_b))
 }
 
+fn game_board(dogs: Option<(Dog, Dog)>) -> Markup {
+    let Some((dog_a, dog_b)) = dogs else {
+        return html! {
+            div class="flex flex-col items-center justify-center gap-6 flex-1" {
+                h1 class="text-5xl" {"You've won!"}
+                p {"(Now please go outside and touch grass and pet a real dog or something)"}
+            }
+        };
+    };
+    html! {
+        div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1" {
+            h1 class="text-5xl" {"Pick your favorite"}
+            div class="flex justify-center gap-6 w-full" {
+                (dog_a)
+                (dog_b)
+            }
+            div class="flex justify-center -mt-2" {
+                button hx-post="/pick-winner/tie" hx-target="#game-board" hx-swap="outerHTML" class="flex flex-col justify-center items-center gap-1 bg-gray-200 hover:bg-gray-300 active:scale-90 transition-all duration-75 rounded-md aspect-square p-8" {
+                    div class="text-6xl" {"="}
+                    div class="text-lg" {"Tie"}
+                }
+            }
+        }
+    }
+}
+
 pub fn doggo_router() -> Router<AppState> {
     Router::<AppState>::new()
         .route("/", get(
             |State(state): State<AppState>, Extension(context): Extension<AppContext>| async move {
-                let Some((dog_a, dog_b)) = get_dog_match(context.user_id, &state.pool).await
-                     else {
-                         return base(html! {"You've won! (Now please go outside and touch grass and pet a real dog or something)"}, Some(0));
-                     };
-
+                let dogs = get_dog_match(context.user_id, &state.pool).await;
                 base(
                     html! {
-                        div class="flex flex-col items-center justify-center gap-6 flex-1" {
-                            h1 class="text-5xl" {"Pick your favorite"}
-                            div class="flex justify-center gap-6 w-full" {
-                                (dog_a)
-                                (dog_b)
-                            }
-                            div class="flex justify-center -mt-2" {
-                                button class="flex flex-col justify-center items-center gap-1 bg-gray-200 hover:bg-gray-300 active:scale-90 transition-all duration-75 rounded-md aspect-square p-8" {
-                                    div class="text-6xl" {"="}
-                                    div class="text-lg" {"Tie"}
-                                }
-                            }
-                        }
+                        (game_board(dogs))
                     },
                     Some(0),
                 )
@@ -167,6 +187,32 @@ pub fn doggo_router() -> Router<AppState> {
                     return err("C'mon, something more original!");
                 }
                 Html(html!{div class="text-3xl" {(result.unwrap().name.unwrap())}}.into_string())
+            }
+        ))
+        .route("/pick-winner/:winner", post(
+            |State(state): State<AppState>, Extension(context): Extension<AppContext>, Path(winner): Path<String>| async move {
+                let new_game_board = || async {
+                    let new_dog_match = get_dog_match(context.user_id, &state.pool).await;
+                    Html(game_board(new_dog_match).into_string())
+                };
+
+                let current_dog_match = get_current_dog_match(context.user_id, &state.pool).await;
+                if current_dog_match.is_none() {
+                    return new_game_board().await;
+                }
+                let current_dog_match = current_dog_match.unwrap();
+
+                let status: Result<&str, ()> = if winner == current_dog_match.dog_a_id.to_string() {Ok(">")}
+                    else if winner == current_dog_match.dog_b_id.to_string() {Ok("<")}
+                    else if winner == "tie" {Ok("=")}
+                    else {Err(())};
+                if status.is_err() {
+                    return new_game_board().await;
+                }
+                let status = status.unwrap();
+                let _ = sqlx::query!("UPDATE match SET status = $1 WHERE id = $2", status, current_dog_match.id).fetch_one(&state.pool).await;
+
+                return new_game_board().await;
             }
         ))
 }

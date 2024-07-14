@@ -1443,6 +1443,10 @@ html {
   border-top-width: 4px;
 }
 
+.static {
+  position: static;
+}
+
 .fixed {
   position: fixed;
 }
