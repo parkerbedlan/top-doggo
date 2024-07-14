@@ -15,5 +15,6 @@ db/*.db*
 justfile
 
 assets/input.css
+assets/images
 
 # .env

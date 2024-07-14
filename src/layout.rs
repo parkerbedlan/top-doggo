@@ -33,7 +33,7 @@ pub fn layout(
         html lang="en";
         head {
             // FOR PROD uncomment the plausible analytics
-            // script defer data-domain="topdog.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
+            // script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}

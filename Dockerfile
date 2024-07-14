@@ -3,7 +3,7 @@
 # FROM rustlang/rust:nightly
 # FROM rust:1.77.2
 FROM rust:alpine3.20 AS builder
-WORKDIR /usr/src/best-doggo
+WORKDIR /app
 
 # RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static build-base protoc pkgconfig
 RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static
@@ -42,9 +42,9 @@ FROM alpine:3.20
 RUN apk add --no-cache libgcc
 # copy the binary into the final image
 # --from=builder
-COPY --from=builder /usr/src/best-doggo/target/release/best-doggo .
-COPY --from=builder /usr/src/best-doggo/.env .
-COPY --from=builder /usr/src/best-doggo/assets/ ./assets/
+COPY --from=builder /app/target/release/best-doggo .
+COPY --from=builder /app/.env .
+COPY --from=builder /app/assets/ ./assets/
 EXPOSE 3000
 # set the binary as entrypoint
 CMD ["./best-doggo"]

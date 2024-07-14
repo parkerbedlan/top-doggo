@@ -30,7 +30,7 @@ dev:
 # docker push ghcr.io/parkerbedlan/best-doggo:0.0.19
 
 dbuild version:
-    docker build -t parkerbedlan/best-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db parkerbedlan/best-doggo:{{version}}
+    docker build -t parkerbedlan/top-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db -v ./assets/images:/assets/images parkerbedlan/top-doggo:{{version}}
    
 dpush version:
-    docker tag parkerbedlan/best-doggo:{{version}} ghcr.io/parkerbedlan/best-doggo:{{version}} && docker push ghcr.io/parkerbedlan/best-doggo:{{version}}
+    docker tag parkerbedlan/top-doggo:{{version}} ghcr.io/parkerbedlan/top-doggo:{{version}} && docker push ghcr.io/parkerbedlan/top-doggo:{{version}}
