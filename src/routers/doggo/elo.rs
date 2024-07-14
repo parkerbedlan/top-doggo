@@ -157,7 +157,9 @@ async fn get_num_matches(
 }
 
 fn get_my_expected_score(my_current_rating: u16, their_current_rating: u16) -> f64 {
-    (1.0 + 10_f64.powf(f64::from(their_current_rating - my_current_rating) / 400.0)).powf(-1.0)
+    (1.0 + 10_f64
+        .powf(f64::from(f64::from(their_current_rating) - f64::from(my_current_rating)) / 400.0))
+    .powf(-1.0)
 }
 
 fn get_my_new_rating(
