@@ -1,5 +1,8 @@
-use self::elo::RatingType;
-use crate::{layout::base, AppContext, AppState, FormField};
+pub use self::elo::RatingType;
+use crate::{
+    layout::{base, NavLink},
+    AppContext, AppState, FormField,
+};
 use axum::{
     extract::{Path, State},
     response::Html,
@@ -126,8 +129,8 @@ fn game_board(dogs: Option<(Dog, Dog)>) -> Markup {
     let Some((dog_a, dog_b)) = dogs else {
         return html! {
             div class="flex flex-col items-center justify-center gap-6 flex-1" {
-                h1 class="text-5xl" {"You've won!"}
-                p {"(Now please go outside and touch grass and pet a real dog or something)"}
+                h1 class="text-5xl" {"You've won! Check out " a href="/leaderboard" class="underline text-blue-700" {"the leaderboard!"}}
+                p {"(Then please go outside and touch grass and pet a real dog or something)"}
             }
         };
     };
@@ -157,7 +160,7 @@ pub fn doggo_router() -> Router<AppState> {
                     html! {
                         (game_board(dogs))
                     },
-                    Some(0),
+                    NavLink::Root
                 )
             },
         ))

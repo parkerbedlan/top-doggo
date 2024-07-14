@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-.htmx-request {
-  /* TODO: remove for prod */
-  background-color: red;
-}
+/* for development only */
+/* .htmx-request { */
+/*   background-color: red; */
+/* } */
 
 /* not sure if these are the move, stole it from https://youtu.be/x7v6SNIgJpE?si=THmL1DLeOUsO2Uvm&t=5941 */
 .htmx-indicator {

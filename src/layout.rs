@@ -1,38 +1,39 @@
 use axum::response::{Html, IntoResponse};
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 
-pub fn base(content: Markup, active_nav_link_index: Option<u8>) -> impl IntoResponse {
-    base_with_title_and_head(content, None, None, active_nav_link_index)
+pub fn base(content: Markup, active_nav_link: NavLink) -> impl IntoResponse {
+    base_with_title_and_head(content, None, None, active_nav_link)
 }
 
 pub fn _base_with_title(
     content: Markup,
     title: Option<String>,
-    active_nav_link_index: Option<u8>,
+    active_nav_link: NavLink,
 ) -> impl IntoResponse {
-    base_with_title_and_head(content, title, None, active_nav_link_index)
+    base_with_title_and_head(content, title, None, active_nav_link)
 }
 
 pub fn base_with_title_and_head(
     content: Markup,
     title: Option<String>,
     head: Option<Markup>,
-    active_nav_link_index: Option<u8>,
+    active_nav_link: NavLink,
 ) -> impl IntoResponse {
-    Html(layout(content, title, head, active_nav_link_index).into_string())
+    Html(layout(content, title, head, active_nav_link).into_string())
 }
 
 pub fn layout(
     content: Markup,
     title: Option<String>,
     head: Option<Markup>,
-    active_nav_link_index: Option<u8>,
+    active_nav_link: NavLink,
 ) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en";
         head {
-            // script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
+            // FOR PROD uncomment the plausible analytics
+            // script defer data-domain="topdog.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
@@ -50,25 +51,33 @@ pub fn layout(
                             })
                         })
                 "#))}
+            // FOR PROD comment out the tailwind cdn
             script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";
-            title {(title.unwrap_or("Welcome".to_string())) " - Acme"}
+            title {(title.unwrap_or("Welcome".to_string())) " - Top Doggo"}
             (head.unwrap_or(html!{}))
         }
         body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen flex flex-col font-shantell" hx-boost="true" {
             {(content)}
-            (navbar(active_nav_link_index))
+            (navbar(active_nav_link))
         }
 
     }
 }
 
-fn navbar(active_nav_link_index: Option<u8>) -> Markup {
+#[derive(PartialEq)]
+pub enum NavLink {
+    Root,
+    Leaderboard,
+    // Me
+}
+
+fn navbar(active_nav_link: NavLink) -> Markup {
     html! {
         footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-gray-200 flex justify-center items-center" {
             div class="w-full h-full flex justify-around items-center max-w-screen-lg" {
-                (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(index) = active_nav_link_index {index == 0} else {false}))
-                    (nav_link(html! {div class="text-9xl" {(trophy_icon())}}, "/leaderboard", if let Some(index) = active_nav_link_index {index == 1} else {false}))
+                (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", active_nav_link == NavLink::Root))
+                    (nav_link(html! {div class="text-9xl" {(trophy_icon())}}, "/leaderboard", active_nav_link == NavLink::Leaderboard))
             }
         }
     }

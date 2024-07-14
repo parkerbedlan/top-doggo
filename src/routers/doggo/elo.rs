@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Deserialize, Serialize, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum RatingType {
     Overall,
     Personal,
