@@ -5,12 +5,12 @@ pub fn base(content: Markup, active_nav_link: NavLink) -> impl IntoResponse {
     base_with_title_and_head(content, None, None, active_nav_link)
 }
 
-pub fn _base_with_title(
+pub fn base_with_title(
     content: Markup,
-    title: Option<String>,
+    title: String,
     active_nav_link: NavLink,
 ) -> impl IntoResponse {
-    base_with_title_and_head(content, title, None, active_nav_link)
+    base_with_title_and_head(content, Some(title), None, active_nav_link)
 }
 
 pub fn base_with_title_and_head(
@@ -33,7 +33,7 @@ pub fn layout(
         html lang="en";
         head {
             // FOR PROD uncomment the plausible analytics
-            // script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
+            script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
@@ -52,9 +52,9 @@ pub fn layout(
                         })
                 "#))}
             // FOR PROD comment out the tailwind cdn
-            script src="https://cdn.tailwindcss.com" {}
+            // script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";
-            title {(title.unwrap_or("Welcome".to_string())) " - Top Doggo"}
+            title {(title.unwrap_or("Top Doggo".to_string()))}
             (head.unwrap_or(html!{}))
         }
         body class="max-w-screen-2xl mx-auto px-4 pb-16 min-h-screen flex flex-col font-shantell" hx-boost="true" {
