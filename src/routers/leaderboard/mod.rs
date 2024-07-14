@@ -59,30 +59,33 @@ pub fn leaderboard_router() -> Router<AppState> {
 
                     base_with_title(
                         html! {
-                            div class="flex justify-center gap-16 mt-4" {
+                            div class="flex justify-center gap-4 md:gap-16 mt-4" {
                                 (tab(RatingType::Overall, rating_type == RatingType::Overall))
                                 (tab(RatingType::Personal, rating_type == RatingType::Personal))
                             }
-                            table class="table table-lg table-zebra [&_*]:text-2xl" {
-                                thead {
-                                    tr {
-                                        th {}
-                                        th {}
-                                        th {}
-                                        th {"Rating"}
-                                        // th {"Wins"}
-                                        // th {"Losses"}
-                                        // th {"Ties"}
-                                    }
-                                }
-                                tbody {
-                                    @for (i, rating) in ratings.iter().enumerate() {
-                                        @let name_display = rating.name.clone().unwrap_or("A dog with no name".to_string());
+                            // switch to overflow-x-auto when you add more columns
+                            div class="overflow-x-hidden" {
+                                table class="table table-sm table-zebra [&_*]:text-2xl overflow-x-auto" {
+                                    thead {
                                         tr {
-                                            th {(i+1)}
-                                            td {img class="object-center object-cover aspect-square w-32" src=(rating.image_url) ;}
-                                            td {(name_display)}
-                                            td {(rating.value)}
+                                            th {}
+                                            th {"Picture"}
+                                            th {"Name"}
+                                            th {"Rating"}
+                                            // th {"Wins"}
+                                            // th {"Losses"}
+                                            // th {"Ties"}
+                                        }
+                                    }
+                                    tbody {
+                                        @for (i, rating) in ratings.iter().enumerate() {
+                                            @let name_display = rating.name.clone().unwrap_or("A dog with no name".to_string());
+                                            tr {
+                                                th {(i+1)}
+                                                td class="min-w-32" {img class="object-center object-cover aspect-square w-32" src=(rating.image_url) ;}
+                                                td {(name_display)}
+                                                td {(rating.value)}
+                                            }
                                         }
                                     }
                                 }
@@ -103,7 +106,7 @@ fn tab(rating_type: RatingType, active: bool) -> Markup {
     html! {
         a class="w-48 flex justify-center active:scale-90 transition-all duration-75 text-3xl"
         href={"/leaderboard/top/"(r_str)} {
-            div class={"border-gray-800" @if active {" border-b-4"}} { (capitalized) }
+            div class={"border-purple-600" @if active {" border-b-4"}} { (capitalized) }
         }
     }
 }

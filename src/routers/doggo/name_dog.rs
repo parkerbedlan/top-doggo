@@ -67,13 +67,20 @@ pub struct NameDogFormParams {
 pub fn name_dog_form(dog_id: i64, new_name: FormField<String>) -> Markup {
     html! {
         // https://gist.github.com/niksumeiko/360164708c3b326bd1c8?permalink_comment_id=3925346#gistcomment-3925346
-        form class="flex gap-1 px-4" hx-patch="/name-dog" hx-swap="outerHTML" autocomplete="off" {
+        form class="flex gap-1 flex-wrap sm:flex-nowrap" hx-patch="/name-dog" hx-swap="outerHTML" autocomplete="off" {
             input type="hidden" name="dog_id" value=(dog_id) autocomplete="off" ;
-            div class="flex flex-col" {
-                input type="text" id={"new_name_"(dog_id)} name="new_name" placeholder="Name this dog!" class={ "input input-bordered w-full text-3xl" @if !new_name.error.is_empty() {" !border-error"} } value=(new_name.value) ;
+            div class="flex flex-col w-full max-w-64 flex-shrink-0" {
+                input type="text"
+                    id={"new_name_"(dog_id)}
+                    name="new_name"
+                    placeholder="Name this dog!"
+                    class={ "input input-bordered w-full text-lg px-2" @if !new_name.error.is_empty() {" !border-error"} }
+                    value=(new_name.value) ;
                 label for={"new_name_"(dog_id)} class="text-lg text-error leading-tight" {(new_name.error)}
             }
-            button type="submit" class="btn text-xl" {(tag_icon())}
+            button type="submit"
+                class="flex flex-col justify-center items-center gap-1 bg-base-200 hover:bg-base-300 active:scale-90 transition-all duration-75 rounded-md p-2 w-full flex-shrink"
+                {(tag_icon())}
         }
     }
 }

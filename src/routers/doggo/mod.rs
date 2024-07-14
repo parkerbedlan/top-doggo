@@ -26,7 +26,7 @@ impl Render for Dog {
     fn render(&self) -> Markup {
         html! {
             div class="max-w-96 w-5/12 flex flex-col items-center gap-3" {
-                button hx-post={"/pick-winner/"(self.id)} hx-target="#game-board" hx-swap="outerHTML" class="w-full aspect-square overflow-auto bg-gray-200 hover:bg-gray-300 active:scale-95 transition-all duration-75 rounded-md p-2" {
+                button hx-post={"/pick-winner/"(self.id)} hx-target="#game-board" hx-swap="outerHTML" class="w-full aspect-square overflow-auto bg-base-200 hover:bg-base-300 active:scale-95 transition-all duration-75 rounded-md p-2" {
                     img class="object-center object-cover aspect-square w-full" src=(self.image_url) ;
                 }
                 @if let Some(name) = &self.name {
@@ -136,13 +136,13 @@ fn game_board(dogs: Option<(Dog, Dog)>) -> Markup {
     };
     html! {
         div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1" {
-            h1 class="text-5xl" {"Pick your favorite"}
+            h1 class="text-5xl text-center" {"Pick your favorite"}
             div class="flex justify-center gap-6 w-full" {
                 (dog_a)
                 (dog_b)
             }
             div class="flex justify-center -mt-2" {
-                button hx-post="/pick-winner/tie" hx-target="#game-board" hx-swap="outerHTML" class="flex flex-col justify-center items-center gap-1 bg-gray-200 hover:bg-gray-300 active:scale-90 transition-all duration-75 rounded-md aspect-square p-8" {
+                button hx-post="/pick-winner/tie" hx-target="#game-board" hx-swap="outerHTML" class="flex flex-col justify-center items-center gap-1 bg-base-200 hover:bg-base-300 active:scale-90 transition-all duration-75 rounded-md w-28 h-28 p-8" {
                     div class="text-6xl" {"="}
                     div class="text-lg" {"Tie"}
                 }
