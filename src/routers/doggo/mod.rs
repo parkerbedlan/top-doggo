@@ -6,8 +6,9 @@ use axum::{
     Extension, Form, Router,
 };
 use maud::{html, Markup, Render};
-use rand::Rng;
+use rand::seq::SliceRandom;
 use serde::Deserialize;
+use sqlx::{Pool, Sqlite};
 
 #[derive(Debug)]
 struct Dog {
@@ -33,47 +34,89 @@ impl Render for Dog {
     }
 }
 
+async fn get_dog(dog_id: i64, pool: &Pool<Sqlite>) -> Option<Dog> {
+    let result = sqlx::query_as!(
+        Dog,
+        "SELECT id, image_url, name FROM dog WHERE id = $1",
+        dog_id
+    )
+    .fetch_one(pool)
+    .await;
+    match result {
+        Ok(dog) => Some(dog),
+        Err(_) => None,
+    }
+}
+
+async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> {
+    let current_dog_match = sqlx::query!(
+        "SELECT dog_a_id, dog_b_id FROM match WHERE user_id=$1 AND status='…' LIMIT 1",
+        user_id
+    )
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+    if let Some(dog_match) = current_dog_match {
+        let dog_a = get_dog(dog_match.dog_a_id, pool).await.unwrap();
+        let dog_b = get_dog(dog_match.dog_b_id, pool).await.unwrap();
+        return Some((dog_a, dog_b));
+    }
+
+    let valid_dog_ids = sqlx::query!(
+        "SELECT id FROM dog WHERE id NOT IN (SELECT dog_id AS id FROM user_finished_with_dog WHERE user_id=$1)", 
+        user_id)
+        .fetch_all(pool).await.unwrap();
+
+    if valid_dog_ids.len() == 0 {
+        return None;
+    }
+
+    let dog_a_id = valid_dog_ids.choose(&mut rand::thread_rng()).unwrap().id;
+
+    let potential_dog_b_ids = sqlx::query!(
+        "SELECT id FROM dog WHERE id <> $1 AND id NOT IN (SELECT dog_a_id AS id FROM match WHERE dog_b_id=$1 AND user_id=$2 UNION SELECT dog_b_id AS id FROM match WHERE dog_a_id=$1 AND user_id=$2)",
+        dog_a_id, user_id)
+        .fetch_all(pool).await.unwrap();
+
+    if potential_dog_b_ids.len() == 0 {
+        let _ = sqlx::query!(
+            "INSERT INTO user_finished_with_dog (user_id, dog_id) VALUES ($1, $2)",
+            user_id,
+            dog_a_id
+        )
+        .fetch_one(pool)
+        .await;
+
+        return Box::pin(get_dog_match(user_id, pool)).await;
+    }
+
+    let dog_b_id = potential_dog_b_ids
+        .choose(&mut rand::thread_rng())
+        .unwrap()
+        .id;
+
+    let _ = sqlx::query!(
+        "INSERT INTO match (user_id, dog_a_id, dog_b_id) VALUES ($1, $2, $3)",
+        user_id,
+        dog_a_id,
+        dog_b_id
+    )
+    .fetch_one(pool)
+    .await;
+
+    let dog_a = get_dog(dog_a_id, pool).await.unwrap();
+    let dog_b = get_dog(dog_b_id, pool).await.unwrap();
+    Some((dog_a, dog_b))
+}
+
 pub fn doggo_router() -> Router<AppState> {
     Router::<AppState>::new()
         .route("/", get(
-            |State(state): State<AppState>, Extension(_context): Extension<AppContext>| async move {
-                let total_dogs = sqlx::query!("SELECT COUNT(*) as count FROM dog").fetch_one(&state.pool).await.unwrap().count;
-
-                let mut dog_a: Option<Dog> = None;
-                while dog_a.is_none() {
-                    let id_a = rand::thread_rng().gen_range(1..total_dogs+1);
-
-                    let result = sqlx::query_as!(Dog,
-                        "SELECT id, image_url, name FROM dog WHERE id = $1",
-                        id_a)
-                        .fetch_one(&state.pool).await;
-                    dog_a = match result {
-                        Ok(dog) => Some(dog),
-                        Err(_) => None
-                    };
-
-                }
-                let dog_a = dog_a.unwrap();
-
-                let mut dog_b: Option<Dog> = None;
-                while dog_b.is_none() {
-                    let mut id_b: i32;
-                    while {
-                        id_b = rand::thread_rng().gen_range(1..total_dogs+1);
-
-                        id_b == dog_a.id as i32
-                    } {}
-
-                    let result = sqlx::query_as!(Dog,
-                        "SELECT id, image_url, name FROM dog WHERE id = $1",
-                        id_b)
-                        .fetch_one(&state.pool).await;
-                    dog_b = match result {
-                        Ok(dog) => Some(dog),
-                        Err(_) => None
-                    };
-                }
-                let dog_b = dog_b.unwrap();
+            |State(state): State<AppState>, Extension(context): Extension<AppContext>| async move {
+                let Some((dog_a, dog_b)) = get_dog_match(context.user_id, &state.pool).await
+                     else {
+                         return base(html! {"You've won! (Now please go outside and touch grass and pet a real dog or something)"}, Some(0));
+                     };
 
                 base(
                     html! {
@@ -94,39 +137,38 @@ pub fn doggo_router() -> Router<AppState> {
                     Some(0),
                 )
             },
-        ),
-    )
-    .route("/name-dog", patch(
-        |State(state): State<AppState>, Extension(context): Extension<AppContext>, Form(form): Form<NameDogFormParams>| async move {
-            let new_name = form.new_name.trim();
+        ))
+        .route("/name-dog", patch(
+            |State(state): State<AppState>, Extension(context): Extension<AppContext>, Form(form): Form<NameDogFormParams>| async move {
+                let new_name = form.new_name.trim();
 
-            let err = |form_error: &str| {
-                Html(name_dog_form(form.dog_id, FormField {value: new_name.to_string().clone(), error: form_error.to_string()}).into_string())
-            };
+                let err = |form_error: &str| {
+                    Html(name_dog_form(form.dog_id, FormField {value: new_name.to_string().clone(), error: form_error.to_string()}).into_string())
+                };
 
-            if new_name == "Jeff" {
-                return err("NO, don't name him Jeff >:(");
+                if new_name == "Jeff" {
+                    return err("NO, don't name him Jeff >:(");
+                }
+                if new_name == "" {
+                    return err("^ Type this dog's new name right up here :)");
+                }
+                let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", form.dog_id)
+                    .fetch_optional(&state.pool).await.unwrap();
+                if dog.is_none() {
+                    return err("404: Dog not found");
+                }
+                let old_name = dog.unwrap().name;
+                if old_name.is_some() {
+                    return err(&format!("{} already has a name, silly.", old_name.unwrap()));
+                }
+                let result = sqlx::query!("UPDATE dog SET (name, namer_id) = ($1, $2) WHERE id = $3 RETURNING name", new_name, context.user_id, form.dog_id)
+                    .fetch_one(&state.pool).await;
+                if result.is_err() {
+                    return err("C'mon, something more original!");
+                }
+                Html(html!{div class="text-3xl" {(result.unwrap().name.unwrap())}}.into_string())
             }
-            if new_name == "" {
-                return err("^ Type this dog's new name right up here :)");
-            }
-            let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", form.dog_id)
-                .fetch_optional(&state.pool).await.unwrap();
-            if dog.is_none() {
-                return err("404: Dog not found");
-            }
-            let old_name = dog.unwrap().name;
-            if old_name.is_some() {
-                return err(&format!("{} already has a name, silly.", old_name.unwrap()));
-            }
-            let result = sqlx::query!("UPDATE dog SET (name, namer_id) = ($1, $2) WHERE id = $3 RETURNING name", new_name, context.user_id, form.dog_id)
-                .fetch_one(&state.pool).await;
-            if result.is_err() {
-                return err("C'mon, something more original!");
-            }
-            Html(html!{div class="text-3xl" {(result.unwrap().name.unwrap())}}.into_string())
-        }
-    ))
+        ))
 }
 
 #[derive(Deserialize, Debug)]
