@@ -160,7 +160,7 @@ pub fn doggo_router() -> Router<AppState> {
                     html! {
                         (game_board(dogs))
                     },
-                    NavLink::Root
+                    Some(NavLink::Root)
                 )
             },
         ))
@@ -200,4 +200,13 @@ pub fn doggo_router() -> Router<AppState> {
                 new_game_board().await
             }
         ))
+        .route("/dedication", get(|| async move {
+            base(html! {
+                div class="flex-1 flex flex-col gap-4 items-center justify-center text-center" {
+                    h1 class="text-4xl" {"This app is dedicated to Chef Alex,"}
+                    p class="text-3xl" {"the biggest dog fan I know."}
+                    p class="text-2xl" {"🐕 🐩 🐶 🐕‍🦺 🦮"}
+                }
+            }, None)
+        }))
 }

@@ -1,14 +1,14 @@
 use axum::response::{Html, IntoResponse};
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 
-pub fn base(content: Markup, active_nav_link: NavLink) -> impl IntoResponse {
+pub fn base(content: Markup, active_nav_link: Option<NavLink>) -> impl IntoResponse {
     base_with_title_and_head(content, None, None, active_nav_link)
 }
 
 pub fn base_with_title(
     content: Markup,
     title: String,
-    active_nav_link: NavLink,
+    active_nav_link: Option<NavLink>,
 ) -> impl IntoResponse {
     base_with_title_and_head(content, Some(title), None, active_nav_link)
 }
@@ -17,7 +17,7 @@ pub fn base_with_title_and_head(
     content: Markup,
     title: Option<String>,
     head: Option<Markup>,
-    active_nav_link: NavLink,
+    active_nav_link: Option<NavLink>,
 ) -> impl IntoResponse {
     Html(layout(content, title, head, active_nav_link).into_string())
 }
@@ -26,7 +26,7 @@ pub fn layout(
     content: Markup,
     title: Option<String>,
     head: Option<Markup>,
-    active_nav_link: NavLink,
+    active_nav_link: Option<NavLink>,
 ) -> Markup {
     html! {
         (DOCTYPE)
@@ -67,19 +67,19 @@ pub fn layout(
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum NavLink {
     Root,
     Leaderboard,
     // Me
 }
 
-fn navbar(active_nav_link: NavLink) -> Markup {
+fn navbar(active_nav_link: Option<NavLink>) -> Markup {
     html! {
         footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-base-200 flex justify-center items-center border-base-100 border-t" {
             div class="w-full h-full flex justify-around items-center max-w-screen-lg" {
-                (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", active_nav_link == NavLink::Root))
-                (nav_link(html! {div class="text-9xl text-yellow-500" {(trophy_icon())}}, "/leaderboard", active_nav_link == NavLink::Leaderboard))
+                (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(link) = active_nav_link {link == NavLink::Root} else {false}))
+                (nav_link(html! {div class="text-9xl text-yellow-500" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
             }
         }
     }

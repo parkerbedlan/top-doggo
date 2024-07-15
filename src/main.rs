@@ -8,7 +8,6 @@ use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
 use tower_http::{normalize_path::NormalizePathLayer, services::ServeDir, trace::TraceLayer};
 use tower_layer::Layer;
-
 mod auth;
 mod layout;
 mod routers;

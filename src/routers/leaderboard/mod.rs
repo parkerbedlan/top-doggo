@@ -92,7 +92,7 @@ pub fn leaderboard_router() -> Router<AppState> {
                             }
                         },
                         "Leaderboard - Top Doggo".to_string(),
-                        NavLink::Leaderboard
+                        Some(NavLink::Leaderboard)
                     )
                 },
             ),
