@@ -40,3 +40,6 @@ dfull version:
 
 ssh:
     ssh root@5.161.95.82
+
+ssh-db:
+    scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db && rm top-doggo.db*
