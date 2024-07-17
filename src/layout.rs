@@ -1,38 +1,26 @@
 use axum::response::{Html, IntoResponse};
 use maud::{html, Markup, PreEscaped, DOCTYPE};
 
-pub fn base(content: Markup, active_nav_link: Option<NavLink>) -> impl IntoResponse {
-    base_with_title_and_head(content, None, None, active_nav_link)
-}
-
-pub fn base_with_title(
-    content: Markup,
-    title: String,
-    active_nav_link: Option<NavLink>,
-) -> impl IntoResponse {
-    base_with_title_and_head(content, Some(title), None, active_nav_link)
-}
-
-pub fn base_with_title_and_head(
+pub fn base(
     content: Markup,
     title: Option<String>,
-    head: Option<Markup>,
+    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
 ) -> impl IntoResponse {
-    Html(layout(content, title, head, active_nav_link).into_string())
+    Html(layout(content, title, active_nav_link).into_string())
 }
 
 pub fn layout(
     content: Markup,
     title: Option<String>,
-    head: Option<Markup>,
+    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
 ) -> Markup {
     html! {
         (DOCTYPE)
         html lang="en";
         head {
-            // FOR PROD uncomment the plausible analytics
+            // FOR PROD uncomment the Plausible analytics
             script defer data-domain="doggo.parkerbedlan.com" src="https://plausible.parkerbedlan.com/js/script.js" {}
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
@@ -54,10 +42,10 @@ pub fn layout(
             // FOR PROD comment out the tailwind cdn
             // script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";
-            title {(title.unwrap_or("Top Doggo".to_string()))}
+            title {@if title.is_none() {"Top Doggo"} @else {(&format!("{} - Top Doggo", title.unwrap()))}}
             meta name="HandheldFriendly" content="true" ;
             meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" ;
-            (head.unwrap_or(html!{}))
+            // (head.unwrap_or(html!{}))
         }
         body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-boost="true" {
             {(content)}

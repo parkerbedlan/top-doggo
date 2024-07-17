@@ -160,6 +160,7 @@ pub fn doggo_router() -> Router<AppState> {
                     html! {
                         (game_board(dogs))
                     },
+                    None,
                     Some(NavLink::Root)
                 )
             },
@@ -207,6 +208,6 @@ pub fn doggo_router() -> Router<AppState> {
                     p class="text-3xl" {"the biggest dog fan I know."}
                     p class="text-2xl" {"🐕 🐩 🐶 🐕‍🦺 🦮"}
                 }
-            }, None)
+            }, Some("Dedication".to_string()), None)
         }))
 }

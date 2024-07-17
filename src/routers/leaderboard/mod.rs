@@ -1,5 +1,5 @@
 use crate::{
-    layout::{base_with_title, NavLink},
+    layout::{base, NavLink},
     routers::doggo::RatingType,
     AppContext, AppState,
 };
@@ -57,7 +57,7 @@ pub fn leaderboard_router() -> Router<AppState> {
                             
                     };
 
-                    base_with_title(
+                    base(
                         html! {
                             div class="flex justify-center gap-4 md:gap-16 mt-4" {
                                 (tab(RatingType::Overall, rating_type == RatingType::Overall))
@@ -91,7 +91,7 @@ pub fn leaderboard_router() -> Router<AppState> {
                                 }
                             }
                         },
-                        "Leaderboard - Top Doggo".to_string(),
+                        Some("Leaderboard".to_string()),
                         Some(NavLink::Leaderboard)
                     )
                 },
