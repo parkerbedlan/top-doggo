@@ -37,3 +37,6 @@ dpush version:
 
 dfull version:
     docker build -t parkerbedlan/top-doggo:{{version}} . && docker tag parkerbedlan/top-doggo:{{version}} ghcr.io/parkerbedlan/top-doggo:{{version}} && docker push ghcr.io/parkerbedlan/top-doggo:{{version}}
+
+ssh:
+    ssh root@5.161.95.82
