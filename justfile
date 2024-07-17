@@ -14,20 +14,20 @@ fix:
     cargo watch -x fix
 
 db:
-    sqlite3 db/best-doggo.db
+    sqlite3 db/top-doggo.db
 
 clippy:
     cargo clippy --fix --allow-dirty
 remove-imports: clippy
 
 dev:
-    tmux new-session -d -s best-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t best-doggo
+    tmux new-session -d -s top-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t top-doggo
 
 # docker image ls # to determine the last version tag used
-# docker build -t parkerbedlan/best-doggo:0.0.19 .
-# docker run -p 3002:3000 -v ./db:/db parkerbedlan/best-doggo:0.0.19
-# docker tag parkerbedlan/best-doggo:0.0.19 ghcr.io/parkerbedlan/best-doggo:0.0.19
-# docker push ghcr.io/parkerbedlan/best-doggo:0.0.19
+# docker build -t parkerbedlan/top-doggo:0.0.19 .
+# docker run -p 3002:3000 -v ./db:/db parkerbedlan/top-doggo:0.0.19
+# docker tag parkerbedlan/top-doggo:0.0.19 ghcr.io/parkerbedlan/top-doggo:0.0.19
+# docker push ghcr.io/parkerbedlan/top-doggo:0.0.19
 
 dbuild version:
     docker build -t parkerbedlan/top-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db -v ./assets/images:/assets/images parkerbedlan/top-doggo:{{version}}

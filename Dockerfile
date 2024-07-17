@@ -42,10 +42,10 @@ FROM alpine:3.20
 RUN apk add --no-cache libgcc
 # copy the binary into the final image
 # --from=builder
-COPY --from=builder /app/target/release/best-doggo .
+COPY --from=builder /app/target/release/top-doggo .
 COPY --from=builder /app/.env .
 COPY --from=builder /app/assets/ ./assets/
 EXPOSE 3000
 # set the binary as entrypoint
-CMD ["./best-doggo"]
-# ENTRYPOINT ["/best-doggo"]
+CMD ["./top-doggo"]
+# ENTRYPOINT ["/top-doggo"]
