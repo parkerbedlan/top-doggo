@@ -16,6 +16,14 @@ pub fn layout(
     // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
 ) -> Markup {
+    let formatted_title = if title.is_none() {
+        "Top Doggo".to_string()
+    } else {
+        format!("{} - Top Doggo", title.unwrap())
+    };
+    let description = "Which doggo is best? You decide. Top Doggo is an elo-based dog show where you're the judge.";
+    let image = "/images/5.jpg";
+
     html! {
         (DOCTYPE)
         html lang="en";
@@ -42,10 +50,29 @@ pub fn layout(
             // FOR PROD comment out the tailwind cdn
             // script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";
-            title {@if title.is_none() {"Top Doggo"} @else {(&format!("{} - Top Doggo", title.unwrap()))}}
+            title {(formatted_title)}
             meta name="HandheldFriendly" content="true" ;
             meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" ;
             // (head.unwrap_or(html!{}))
+
+            // link preview meta tags generated with https://metatags.io
+            // primary link preview meta tags
+            meta name="title" content=(formatted_title);
+            meta name="description" content=(description);
+            // Open Graph / Facebook
+            meta property="og:type" content="website";
+            // This may have to be dynamic and take a parameter
+            // meta property="og:url" content="https://doggo.parkerbedlan.com/" ;
+            meta property="og:title" content=(formatted_title);
+            meta property="og:description" content=(description);
+            meta property="og:image" content=(image);
+            // Twitter
+            meta property="twitter:card" content="summary_large_image";
+            // This may have to be dynamic and take a parameter
+            // meta property="twitter:url" content="https://doggo.parkerbedlan.com/" ;
+            meta property="twitter:title" content=(formatted_title);
+            meta property="twitter:description" content=(description);
+            meta property="twitter:image" content=(image);
         }
         body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-boost="true" {
             {(content)}
