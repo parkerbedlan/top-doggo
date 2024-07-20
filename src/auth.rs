@@ -5,7 +5,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use axum_client_ip::SecureClientIp;
+use axum_client_ip::XForwardedFor;
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 
@@ -13,7 +13,8 @@ const AUTH_TOKEN_COOKIE_NAME: &str = "best_doggo_auth_token";
 
 pub async fn auth<B>(
     State(state): State<AppState>,
-    client_ip: SecureClientIp,
+    // secure_client_ip: SecureClientIp,
+    XForwardedFor(client_ips): XForwardedFor,
     mut req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
@@ -65,10 +66,9 @@ pub async fn auth<B>(
         new_user_id
     };
 
-    let app_context = AppContext {
-        user_id,
-        client_ip: Some(client_ip.0),
-    };
+    // let client_ip = Some(secure_client_ip.0);
+    let client_ip = client_ips.first().cloned();
+    let app_context = AppContext { user_id, client_ip };
     req.extensions_mut().insert(app_context);
 
     let mut response = next.run(req).await;

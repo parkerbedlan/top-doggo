@@ -3,7 +3,7 @@ use axum::{
     middleware::{self},
     Router,
 };
-use axum_client_ip::SecureClientIpSource;
+use axum_client_ip::XForwardedFor;
 use dotenv::dotenv;
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
@@ -41,7 +41,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
         .layer(TraceLayer::new_for_http())
-        .layer(SecureClientIpSource::ConnectInfo.into_extension())
+        // only necessary if running the app without a proxy like traefik
+        // .layer(SecureClientIpSource::ConnectInfo.into_extension())
         .with_state(state);
 
     // so that `/foo` and `/foo/` render the same page
