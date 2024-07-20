@@ -66,6 +66,33 @@ pub async fn update_ratings(
         expected_score_b,
     );
 
+    match rating_type {
+        RatingType::Overall => {
+            let rating_change_a = i32::from(new_rating_a) - i32::from(current_rating_a);
+            let rating_change_b = i32::from(new_rating_b) - i32::from(current_rating_b);
+            let _ = sqlx::query!("UPDATE match SET elo_change_overall_a = $1, elo_change_overall_b = $2 WHERE user_id = $3 AND dog_a_id = $4 AND dog_b_id = $5",
+                                 rating_change_a,
+                                 rating_change_b,
+                                 user_id,
+                                 dog_a_id,
+                                 dog_b_id
+                                ).fetch_one(pool).await;
+            ()
+        }
+        RatingType::Personal => {
+            let rating_change_a = i32::from(new_rating_a) - i32::from(current_rating_a);
+            let rating_change_b = i32::from(new_rating_b) - i32::from(current_rating_b);
+            let _ = sqlx::query!("UPDATE match SET elo_change_personal_a = $1, elo_change_personal_b = $2 WHERE user_id = $3 AND dog_a_id = $4 AND dog_b_id = $5",
+                                 rating_change_a,
+                                 rating_change_b,
+                                 user_id,
+                                 dog_a_id,
+                                 dog_b_id
+                                ).fetch_one(pool).await;
+            ()
+        }
+    }
+
     // set the new ratings in the database
     set_rating(pool, dog_a_id, new_rating_a, rating_type, user_id).await;
     set_rating(pool, dog_b_id, new_rating_b, rating_type, user_id).await;

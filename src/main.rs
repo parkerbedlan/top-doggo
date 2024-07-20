@@ -28,6 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let pool = SqlitePool::connect(&env::var("DATABASE_URL")?).await?;
 
+    // FOR PROD make sure this is not commented out
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     let state = AppState { pool };

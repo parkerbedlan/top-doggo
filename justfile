@@ -43,3 +43,11 @@ ssh:
 
 ssh-db:
     scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db && rm top-doggo.db*
+
+# below seems like a bad idea for the sake of concurrency and not losing what a user is doing
+# ssh-db-no-rm:
+#    scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db
+# ssh-db-rm:
+#    rm top-doggo.db*
+# ssh-db-push:
+#    scp ./top-doggo.db* root@5.161.95.82:/root/top-doggo/db/
