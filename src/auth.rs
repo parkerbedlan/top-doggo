@@ -5,6 +5,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use axum_client_ip::SecureClientIp;
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 
@@ -12,6 +13,7 @@ const AUTH_TOKEN_COOKIE_NAME: &str = "best_doggo_auth_token";
 
 pub async fn auth<B>(
     State(state): State<AppState>,
+    client_ip: SecureClientIp,
     mut req: Request<B>,
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
@@ -34,38 +36,39 @@ pub async fn auth<B>(
 
     let mut new_auth_token: Option<String> = None;
 
-    let user_id = match sqlx::query_as!(
-        AppContext,
+    let user_id = sqlx::query!(
         "SELECT user_id FROM session WHERE token = $1",
         original_auth_token
     )
     .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(AppContext { user_id })) => user_id,
-        _ => {
-            let new_user = sqlx::query!("INSERT INTO user DEFAULT VALUES RETURNING id")
-                .fetch_one(&state.pool)
-                .await
-                .unwrap();
-            let new_user_id = new_user.id;
-
-            let new_token = Uuid::new_v4().to_string();
-            let _ = sqlx::query!(
-                "INSERT INTO session (token, user_id) VALUES ($1, $2)",
-                new_token,
-                new_user_id
-            )
+    .await;
+    let user_id = if let Ok(Some(record)) = user_id {
+        record.user_id
+    } else {
+        let new_user = sqlx::query!("INSERT INTO user DEFAULT VALUES RETURNING id")
             .fetch_one(&state.pool)
-            .await;
+            .await
+            .unwrap();
+        let new_user_id = new_user.id;
 
-            new_auth_token = Some(new_token);
-
+        let new_token = Uuid::new_v4().to_string();
+        let _ = sqlx::query!(
+            "INSERT INTO session (token, user_id) VALUES ($1, $2)",
+            new_token,
             new_user_id
-        }
+        )
+        .fetch_one(&state.pool)
+        .await;
+
+        new_auth_token = Some(new_token);
+
+        new_user_id
     };
 
-    let app_context = AppContext { user_id };
+    let app_context = AppContext {
+        user_id,
+        client_ip: Some(client_ip.0),
+    };
     req.extensions_mut().insert(app_context);
 
     let mut response = next.run(req).await;

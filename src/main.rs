@@ -3,6 +3,7 @@ use axum::{
     middleware::{self},
     Router,
 };
+use axum_client_ip::SecureClientIpSource;
 use dotenv::dotenv;
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
@@ -20,6 +21,7 @@ pub struct AppState {
 #[derive(Debug, Clone)]
 struct AppContext {
     user_id: i64,
+    client_ip: Option<std::net::IpAddr>,
 }
 
 #[tokio::main]
@@ -33,20 +35,23 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let state = AppState { pool };
 
-    let app = Router::<AppState>::new()
+    let app = Router::new()
         .nest("/leaderboard", routers::leaderboard())
         .nest("/", routers::doggo())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
         .layer(TraceLayer::new_for_http())
+        .layer(SecureClientIpSource::ConnectInfo.into_extension())
         .with_state(state);
+
     // so that `/foo` and `/foo/` render the same page
     let app = NormalizePathLayer::trim_trailing_slash().layer(app);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("listening on {}", addr);
+
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 
@@ -65,3 +70,4 @@ impl FormField<String> {
         }
     }
 }
+

@@ -155,6 +155,7 @@ pub fn doggo_router() -> Router<AppState> {
     Router::<AppState>::new()
         .route("/", get(
             |State(state): State<AppState>, Extension(context): Extension<AppContext>| async move {
+                println!("ip {:?}", context.client_ip);
                 let dogs = get_dog_match(context.user_id, &state.pool).await;
                 base(
                     html! {
