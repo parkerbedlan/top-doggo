@@ -1,3 +1,5 @@
+use std::cmp;
+
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
 
@@ -197,9 +199,12 @@ fn get_my_new_rating(
     my_actual_score: f32,
     my_expected_score: f64,
 ) -> u16 {
-    (f64::from(my_current_rating)
-        + f64::from(my_max_rating_change) * (f64::from(my_actual_score) - my_expected_score))
-        .round() as u16
+    cmp::max(
+        100,
+        (f64::from(my_current_rating)
+            + f64::from(my_max_rating_change) * (f64::from(my_actual_score) - my_expected_score))
+            .round() as u16,
+    )
 }
 
 async fn set_rating(
