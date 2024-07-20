@@ -55,6 +55,21 @@ pub async fn name_dog(
     if result.is_err() {
         return err("C'mon, something more original!");
     }
+
+    let client_ip: Option<String> = if let Some(ip) = context.client_ip {
+        Some(ip.to_string())
+    } else {
+        None
+    };
+    let _ = sqlx::query!(
+        "INSERT INTO log (action, user_id, client_ip, notes) VALUES ('name-dog', $1, $2, $3)",
+        context.user_id,
+        client_ip,
+        form.dog_id
+    )
+    .fetch_one(&state.pool)
+    .await;
+
     Html(html! {div class="text-3xl" {(result.unwrap().name.unwrap())}}.into_string())
 }
 

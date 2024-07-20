@@ -3,7 +3,6 @@ use axum::{
     middleware::{self},
     Router,
 };
-use axum_client_ip::XForwardedFor;
 use dotenv::dotenv;
 use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
@@ -71,4 +70,3 @@ impl FormField<String> {
         }
     }
 }
-
