@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = {version = "0.6.20", features = ["macros"]}
+axum = {version = "0.6.20", features = ["macros", "multipart"]}
 tokio = { version = "1.37.0", features = ["full"] }
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 tracing = "0.1"
-tower-http = { version = "0.4.1", features = ["fs", "trace", "normalize-path"] }
+tower-http = { version = "0.4.1", features = ["fs", "trace", "normalize-path", "limit"] }
 tower-layer = "0.3.2"
 sqlx = { version = "0.7", features = [ "runtime-tokio", "sqlite"] }
     # ipnetwork feature is a thing

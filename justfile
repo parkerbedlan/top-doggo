@@ -30,7 +30,10 @@ dev:
 # docker push ghcr.io/parkerbedlan/top-doggo:0.0.19
 
 dbuild version:
-    docker build -t parkerbedlan/top-doggo:{{version}} . && docker run -p 3002:3000 -v ./db:/db -v ./assets/images:/assets/images parkerbedlan/top-doggo:{{version}}
+    docker build -t parkerbedlan/top-doggo:{{version}} . && just drun {{version}}
+
+drun version:
+    docker run -p 3002:3000 -v ./db:/db -v ./assets/images:/assets/images -v ./unapproved:/unapproved parkerbedlan/top-doggo:{{version}}
    
 dpush version:
     docker tag parkerbedlan/top-doggo:{{version}} ghcr.io/parkerbedlan/top-doggo:{{version}} && docker push ghcr.io/parkerbedlan/top-doggo:{{version}}
@@ -43,11 +46,3 @@ ssh:
 
 ssh-db:
     scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db && rm top-doggo.db*
-
-# below seems like a bad idea for the sake of concurrency and not losing what a user is doing
-# ssh-db-no-rm:
-#    scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db
-# ssh-db-rm:
-#    rm top-doggo.db*
-# ssh-db-push:
-#    scp ./top-doggo.db* root@5.161.95.82:/root/top-doggo/db/

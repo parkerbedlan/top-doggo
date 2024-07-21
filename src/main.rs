@@ -1,3 +1,4 @@
+use axum::extract::DefaultBodyLimit;
 use axum::ServiceExt;
 use axum::{
     middleware::{self},
@@ -8,6 +9,7 @@ use sqlx::{Pool, Sqlite, SqlitePool};
 use std::{env, error::Error, net::SocketAddr};
 use tower_http::{normalize_path::NormalizePathLayer, services::ServeDir, trace::TraceLayer};
 use tower_layer::Layer;
+
 mod auth;
 mod layout;
 mod routers;
@@ -37,9 +39,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let app = Router::new()
         .nest("/leaderboard", routers::leaderboard())
         .nest("/", routers::doggo())
+        .nest("/upload", routers::upload())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
         .layer(TraceLayer::new_for_http())
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 10)) // 10 MiB
         // only necessary if running the app without a proxy like traefik
         // .layer(SecureClientIpSource::ConnectInfo.into_extension())
         .with_state(state);

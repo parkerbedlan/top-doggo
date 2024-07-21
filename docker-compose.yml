@@ -1,9 +1,10 @@
 services:
   top-doggo:
-    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.9'
+    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.13'
     volumes:
       - '/root/top-doggo/db:/db'
       - '/root/top-doggo/images:/assets/images'
+      - '/root/top-doggo/unapproved:/unapproved'
     networks:
       jw0s4ck: null
     labels:

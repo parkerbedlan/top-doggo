@@ -14,7 +14,7 @@ use rand::seq::SliceRandom;
 use sqlx::{Pool, Sqlite};
 
 mod elo;
-mod name_dog;
+pub mod name_dog;
 
 #[derive(Debug)]
 struct Dog {
