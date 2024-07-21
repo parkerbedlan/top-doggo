@@ -1,8 +1,13 @@
-use std::{fs, path::Path};
-
-use crate::{layout::base, AppState, FormField};
-use axum::{extract::Multipart, response::Html, routing::get, Router};
+use crate::{layout::base, routers::doggo::name_dog::name_dog, AppContext, AppState, FormField};
+use axum::{
+    body::Bytes,
+    extract::{Multipart, State},
+    response::Html,
+    routing::get,
+    Extension, Router,
+};
 use maud::{html, Markup, PreEscaped};
+use std::{fs, path::Path};
 
 pub fn upload_router() -> Router<AppState> {
     Router::<AppState>::new().route(
@@ -10,62 +15,120 @@ pub fn upload_router() -> Router<AppState> {
         get(|| async move {
             let new_dog_name: FormField<String> = FormField::empty();
             // let new_dog_name: FormField<String> = FormField {value: "".to_string(), error: "Uh oh".to_string()};
-            base(upload_dog_form(new_dog_name), None, None)
+            base(
+                upload_dog_form(new_dog_name, FileUploadStatus::NotUploaded),
+                None,
+                None,
+            )
         })
-        .post(|mut multipart: Multipart| async move {
-            let err = || Html("Error processing form".to_string());
+        .post(
+            |State(state): State<AppState>,
+             Extension(context): Extension<AppContext>,
+             mut multipart: Multipart| async move {
+                let mut dog_name: Option<String> = None;
+                let mut dog_photo: Option<Bytes> = None;
 
-            // should already exist as docker volume, therefore unnecessary
-            // // Ensure the ./unapproved directory exists
-            // if let Err(error) = fs::create_dir_all("./unapproved") {
-            //     eprintln!("Error creating directory: {:?}", error);
-            //     return err();
-            // }
+                let critical_err = || Html("Error processing form".to_string());
 
-            while let Some(field) = match multipart.next_field().await {
-                Ok(field) => field,
-                Err(error) => {
-                    eprintln!("Error getting next field: {:?}", error);
-                    return err();
-                }
-            } {
-                let name = match field.name() {
-                    Some(name) => name.to_string(),
-                    None => {
-                        eprintln!("Field without a name");
-                        return err();
-                    }
-                };
-                let data = match field.bytes().await {
-                    Ok(data) => data,
+                // extract out dog_name and dog_photo
+                while let Some(field) = match multipart.next_field().await {
+                    Ok(field) => field,
                     Err(error) => {
-                        eprintln!("Error reading bytes: {:?}", error);
-                        return err();
+                        eprintln!("Error getting next field: {:?}", error);
+                        return critical_err();
                     }
-                };
+                } {
+                    let name = match field.name() {
+                        Some(name) => name.to_string(),
+                        None => {
+                            eprintln!("Field without a name");
+                            return critical_err();
+                        }
+                    };
+                    let data = match field.bytes().await {
+                        Ok(data) => data,
+                        Err(error) => {
+                            eprintln!("Error reading bytes: {:?}", error);
+                            return critical_err();
+                        }
+                    };
 
-                if name == "new_dog_photo" {
-                    // TODO: file_name should be the id of the newly created dog
-                    // TODO: determine whether a file extension is required and how to steal the
-                    // file extension from the old file
-                    // let file_name = field.file_name().unwrap_or("unnamed_file").to_string();
-                    let file_name = "blah2.jpg".to_string();
-                    let file_path = Path::new("./unapproved").join(&file_name);
-
-                    if let Err(error) = fs::write(&file_path, &data) {
-                        eprintln!("Error saving file: {:?}", error);
-                        return err();
+                    if name == "new_dog_name" {
+                        dog_name =
+                            Some(String::from_utf8(data.to_vec()).unwrap().trim().to_string());
+                    } else if name == "new_dog_photo" {
+                        // TODO: validate file
+                        dog_photo = Some(data);
                     }
-
-                    println!("Saved file '{}' to {:?}", file_name, file_path);
                 }
-            }
-            Html(upload_dog_form(FormField::empty()).into_string())
-        }),
+                if dog_name.is_none() || dog_photo.is_none() {
+                    return critical_err();
+                }
+                let dog_name = dog_name.unwrap();
+                let dog_photo = dog_photo.unwrap();
+
+                // create the unapproved dog, returning the id
+                let dog_id = sqlx::query!(
+                    "INSERT INTO dog (image_url, approved) VALUES ('temp', false) RETURNING id",
+                )
+                .fetch_one(&state.pool)
+                .await
+                .unwrap()
+                .id;
+
+                // upload the photo with the id as a name
+                let file_name = format!("{}.jpg", dog_id);
+                let file_path = Path::new("./unapproved").join(&file_name);
+                if let Err(error) = fs::write(&file_path, &dog_photo) {
+                    eprintln!("Error saving file: {:?}", error);
+                    return critical_err();
+                }
+                println!("Saved file '{}' to {:?}", file_name, file_path);
+
+                // add the image_url
+                let image_url = format!("/images/{}", file_name);
+                let _ = sqlx::query!(
+                    "UPDATE dog SET image_url = $1 WHERE id = $2",
+                    image_url,
+                    dog_id
+                )
+                .fetch_one(&state.pool)
+                .await;
+
+                // use the name_dog function
+                let result = name_dog(&state.pool, context.user_id, dog_id, &dog_name).await;
+                if let Err(error) = result {
+                    return Html(
+                        upload_dog_form(
+                            FormField {
+                                value: dog_name,
+                                error: error.to_string(),
+                            },
+                            FileUploadStatus::Uploaded,
+                        )
+                        .into_string(),
+                    );
+                }
+
+                Html(
+                    upload_dog_form(FormField::empty(), FileUploadStatus::NotUploaded)
+                        .into_string(),
+                )
+            },
+        ),
     )
 }
 
-pub fn upload_dog_form(new_dog_name: FormField<String>) -> Markup {
+pub enum FileUploadStatus {
+    Uploaded,
+    NotUploaded,
+    Err(String),
+}
+
+pub fn upload_dog_form(
+    new_dog_name: FormField<String>,
+    file_upload_status: FileUploadStatus,
+) -> Markup {
     html! {
         form
             id="upload-form"
@@ -76,7 +139,24 @@ pub fn upload_dog_form(new_dog_name: FormField<String>) -> Markup {
             class="flex-1 flex flex-col items-center justify-center gap-6 max-w-sm mx-auto"
             {
             h1 class="text-5xl text-center" {"Add your dog!"}
-            input type="file" id="new_dog_photo" name="new_dog_photo" class="file-input file-input-bordered file-input-lg w-full" ;
+            @match file_upload_status {
+                FileUploadStatus::NotUploaded => {
+                    input type="file" id="new_dog_photo" name="new_dog_photo" class="file-input file-input-bordered file-input-lg w-full" ;
+                },
+                FileUploadStatus::Uploaded => {
+                    div class="border border-2 border-success bg-success bg-opacity-20 flex items-center justify-center" {
+                        div {"✔️"}
+                        div {"Uploeaded"}
+                    }
+
+                },
+                FileUploadStatus::Err(error) => {
+                    div class="flex flex-col gap-1" {
+                        input type="file" id="new_dog_photo" name="new_dog_photo" class="file-input file-input-bordered file-input-lg w-full file-input-error" ;
+                        label for="new_dog_photo" class="text-lg text-error leading-tight" {(error)}
+                    }
+                }
+            }
             div class="flex flex-col gap-1" {
                 input type="text"
                     id="new_dog_name"

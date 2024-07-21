@@ -6,8 +6,9 @@ use axum::{
 };
 use maud::{html, Markup};
 use serde::Deserialize;
+use sqlx::{Pool, Sqlite};
 
-pub async fn name_dog(
+pub async fn name_dog_router(
     State(state): State<AppState>,
     Extension(context): Extension<AppContext>,
     Form(form): Form<NameDogFormParams>,
@@ -27,33 +28,13 @@ pub async fn name_dog(
         )
     };
 
-    if new_name == "Jeff" {
-        return err("NO, don't name him Jeff >:(");
-    }
     if new_name.is_empty() {
         return err("^ Type this dog's new name right up here :)");
     }
-    let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", form.dog_id)
-        .fetch_optional(&state.pool)
-        .await
-        .unwrap();
-    if dog.is_none() {
-        return err("404: Dog not found");
-    }
-    let old_name = dog.unwrap().name;
-    if old_name.is_some() {
-        return err(&format!("{} already has a name, silly.", old_name.unwrap()));
-    }
-    let result = sqlx::query!(
-        "UPDATE dog SET (name, namer_id) = ($1, $2) WHERE id = $3 RETURNING name",
-        new_name,
-        context.user_id,
-        form.dog_id
-    )
-    .fetch_one(&state.pool)
-    .await;
-    if result.is_err() {
-        return err("C'mon, something more original!");
+
+    let result = name_dog(&state.pool, context.user_id, form.dog_id, new_name).await;
+    if let Err(error) = result {
+        return err(&error);
     }
 
     let client_ip: Option<String> = if let Some(ip) = context.client_ip {
@@ -70,7 +51,42 @@ pub async fn name_dog(
     .fetch_one(&state.pool)
     .await;
 
-    Html(html! {div class="text-3xl" {(result.unwrap().name.unwrap())}}.into_string())
+    Html(html! {div class="text-3xl" {(result.unwrap())}}.into_string())
+}
+
+pub async fn name_dog(
+    pool: &Pool<Sqlite>,
+    user_id: i64,
+    dog_id: i64,
+    new_name: &str,
+) -> Result<String, String> {
+    if new_name == "Jeff" {
+        return Err("NO, don't name him Jeff >:(".to_string());
+    }
+    let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", dog_id)
+        .fetch_optional(pool)
+        .await
+        .unwrap();
+    if dog.is_none() {
+        return Err("404: Dog not found".to_string());
+    }
+    let old_name = dog.unwrap().name;
+    if old_name.is_some() {
+        return Err(format!("{} already has a name, silly.", old_name.unwrap()));
+    }
+
+    let result = sqlx::query!(
+        "UPDATE dog SET (name, namer_id) = ($1, $2) WHERE id = $3 RETURNING name",
+        new_name,
+        user_id,
+        dog_id
+    )
+    .fetch_one(pool)
+    .await;
+    if result.is_err() {
+        return Err("C'mon, something more original!".to_string());
+    }
+    Ok(result.unwrap().name.unwrap())
 }
 
 #[derive(Deserialize, Debug)]

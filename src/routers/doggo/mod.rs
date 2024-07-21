@@ -79,7 +79,7 @@ async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> 
     }
 
     let valid_dog_ids = sqlx::query!(
-        "SELECT id FROM dog WHERE id NOT IN (SELECT dog_id AS id FROM user_finished_with_dog WHERE user_id=$1)", 
+        "SELECT id FROM dog WHERE approved = TRUE AND id NOT IN (SELECT dog_id AS id FROM user_finished_with_dog WHERE user_id=$1)", 
         user_id)
         .fetch_all(pool).await.unwrap();
 
@@ -90,7 +90,7 @@ async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> 
     let dog_a_id = valid_dog_ids.choose(&mut rand::thread_rng()).unwrap().id;
 
     let potential_dog_b_ids = sqlx::query!(
-        "SELECT id FROM dog WHERE id <> $1 AND id NOT IN (SELECT dog_a_id AS id FROM match WHERE dog_b_id=$1 AND user_id=$2 UNION SELECT dog_b_id AS id FROM match WHERE dog_a_id=$1 AND user_id=$2)",
+        "SELECT id FROM dog WHERE approved = TRUE AND id <> $1 AND id NOT IN (SELECT dog_a_id AS id FROM match WHERE dog_b_id=$1 AND user_id=$2 UNION SELECT dog_b_id AS id FROM match WHERE dog_a_id=$1 AND user_id=$2)",
         dog_a_id, user_id)
         .fetch_all(pool).await.unwrap();
 
@@ -166,7 +166,7 @@ pub fn doggo_router() -> Router<AppState> {
                 )
             },
         ))
-        .route("/name-dog", patch(name_dog::name_dog))
+        .route("/name-dog", patch(name_dog::name_dog_router))
         .route("/pick-winner/:winner", post(
             |State(state): State<AppState>, Extension(context): Extension<AppContext>, Path(winner): Path<String>| async move {
                 let pool = &state.pool;
