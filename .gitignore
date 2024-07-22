@@ -19,3 +19,4 @@ target/
 # put in manually by me
 node_modules
 *.db*
+unapproved

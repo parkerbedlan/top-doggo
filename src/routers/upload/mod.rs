@@ -13,10 +13,8 @@ pub fn upload_router() -> Router<AppState> {
     Router::<AppState>::new().route(
         "/",
         get(|| async move {
-            let new_dog_name: FormField<String> = FormField::empty();
-            // let new_dog_name: FormField<String> = FormField {value: "".to_string(), error: "Uh oh".to_string()};
             base(
-                upload_dog_form(new_dog_name, FileUploadStatus::NotUploaded),
+                upload_dog_form(FormField::empty(), FileUploadStatus::NotUploaded),
                 None,
                 None,
             )
@@ -45,6 +43,25 @@ pub fn upload_router() -> Router<AppState> {
                             return critical_err();
                         }
                     };
+
+                    if let Some(file_type) = field.content_type() {
+                        if !file_type.starts_with("image/") {
+                            println!("oop {:?}", file_type);
+                            return Html(
+                                upload_dog_form(
+                                    FormField {
+                                        value: dog_name.unwrap_or("".to_string()),
+                                        error: "".to_string(),
+                                    },
+                                    FileUploadStatus::Err("Must be an image".to_string()),
+                                )
+                                .into_string(),
+                            );
+                        } else {
+                            println!("yayaya {:?}", file_type);
+                        }
+                    }
+
                     let data = match field.bytes().await {
                         Ok(data) => data,
                         Err(error) => {
@@ -57,63 +74,94 @@ pub fn upload_router() -> Router<AppState> {
                         dog_name =
                             Some(String::from_utf8(data.to_vec()).unwrap().trim().to_string());
                     } else if name == "new_dog_photo" {
-                        // TODO: validate file
                         dog_photo = Some(data);
                     }
                 }
-                if dog_name.is_none() || dog_photo.is_none() {
+                // should always at least be an empty string
+                if dog_name.is_none() {
+                    eprintln!("No dog_name value");
                     return critical_err();
                 }
-                let dog_name = dog_name.unwrap();
-                let dog_photo = dog_photo.unwrap();
-
-                // create the unapproved dog, returning the id
-                let dog_id = sqlx::query!(
-                    "INSERT INTO dog (image_url, approved) VALUES ('temp', false) RETURNING id",
-                )
-                .fetch_one(&state.pool)
-                .await
-                .unwrap()
-                .id;
-
-                // upload the photo with the id as a name
-                let file_name = format!("{}.jpg", dog_id);
-                let file_path = Path::new("./unapproved").join(&file_name);
-                if let Err(error) = fs::write(&file_path, &dog_photo) {
-                    eprintln!("Error saving file: {:?}", error);
-                    return critical_err();
-                }
-                println!("Saved file '{}' to {:?}", file_name, file_path);
-
-                // add the image_url
-                let image_url = format!("/images/{}", file_name);
-                let _ = sqlx::query!(
-                    "UPDATE dog SET image_url = $1 WHERE id = $2",
-                    image_url,
-                    dog_id
-                )
-                .fetch_one(&state.pool)
-                .await;
-
-                // use the name_dog function
-                let result = name_dog(&state.pool, context.user_id, dog_id, &dog_name).await;
-                if let Err(error) = result {
+                if dog_photo.is_none() {
                     return Html(
                         upload_dog_form(
                             FormField {
-                                value: dog_name,
-                                error: error.to_string(),
+                                value: dog_name.unwrap_or("".to_string()),
+                                error: "".to_string(),
                             },
-                            FileUploadStatus::Uploaded,
+                            FileUploadStatus::Err("Required".to_string()),
                         )
                         .into_string(),
                     );
                 }
+                let dog_name = dog_name.unwrap();
+                let dog_photo = dog_photo.unwrap();
 
-                Html(
-                    upload_dog_form(FormField::empty(), FileUploadStatus::NotUploaded)
-                        .into_string(),
-                )
+                let uploaded =
+                    String::from_utf8(dog_photo.to_vec()).unwrap_or("".to_string()) == "uploaded";
+
+                let mut transaction = state.pool.begin().await.unwrap();
+
+                let dog_id = if uploaded {
+                    let result = sqlx::query!("SELECT id FROM dog WHERE approved = FALSE AND namer_id = $1 AND name IS NULL ORDER BY id DESC LIMIT 1", context.user_id)
+                        .fetch_one(&mut *transaction).await;
+                    if result.is_err() {
+                        eprintln!("Couldn't find uploaded dog");
+                        return critical_err();
+                    }
+                    result.unwrap().id
+                } else {
+                    sqlx::query!( "INSERT INTO dog (image_url, approved, namer_id) VALUES ('temp', false, $1) RETURNING id", context.user_id)
+                        .fetch_one(&mut *transaction) .await .unwrap() .id
+                };
+
+                if !uploaded {
+                    let file_name = format!("{}.jpg", dog_id);
+                    let file_path = Path::new("./unapproved").join(&file_name);
+                    if let Err(error) = fs::write(&file_path, &dog_photo) {
+                        eprintln!("Error saving file: {:?}", error);
+                        // can be implicit?
+                        // let _ = transaction.rollback().await;
+                        return critical_err();
+                    }
+                    println!("Saved file '{}' to {:?}", file_name, file_path);
+
+                    let image_url = format!("/images/{}", file_name);
+                    let _ = sqlx::query!(
+                        "UPDATE dog SET image_url = $1 WHERE id = $2",
+                        image_url,
+                        dog_id
+                    )
+                    // .fetch_one(&state.pool)
+                    .fetch_one(&mut *transaction)
+                    .await;
+                }
+
+                let _ = transaction.commit().await;
+
+                if !dog_name.is_empty() {
+                    let result = name_dog(&state.pool, context.user_id, dog_id, &dog_name).await;
+                    if let Err(error) = result {
+                        return Html(
+                            upload_dog_form(
+                                FormField {
+                                    value: dog_name,
+                                    error: error.to_string(),
+                                },
+                                FileUploadStatus::Uploaded,
+                            )
+                            .into_string(),
+                        );
+                    }
+                }
+
+                Html(html!{
+                    div class="flex-1 flex flex-col gap-4 items-center justify-center text-center" {
+                        h1 class="text-4xl" {"Thanks for adding your dog!"}
+                        p class="text-2xl" {"Our team will approve em, and then they'll join the squad :)"}
+                    }
+                }.into_string())
+
             },
         ),
     )
@@ -141,12 +189,16 @@ pub fn upload_dog_form(
             h1 class="text-5xl text-center" {"Add your dog!"}
             @match file_upload_status {
                 FileUploadStatus::NotUploaded => {
-                    input type="file" id="new_dog_photo" name="new_dog_photo" class="file-input file-input-bordered file-input-lg w-full" ;
+                    div class="flex flex-col gap-1" {
+                        input type="file" id="new_dog_photo" name="new_dog_photo" class="file-input file-input-bordered file-input-lg w-full" ;
+                        label id="new_dog_photo_error" for="new_dog_photo" class="text-lg text-error leading-tight" {""}
+                    }
                 },
                 FileUploadStatus::Uploaded => {
-                    div class="border border-2 border-success bg-success bg-opacity-20 flex items-center justify-center" {
-                        div {"✔️"}
-                        div {"Uploeaded"}
+                    div class="border border-2 border-success bg-success bg-opacity-20 flex items-center justify-center gap-2 h-16 w-full rounded-md" {
+                        div class="text-4xl" {"✅"}
+                        div class="text-2xl" {"Uploaded"}
+                        input type="hidden" id="new_dog_photo" name="new_dog_photo" value="uploaded" ;
                     }
 
                 },
@@ -175,6 +227,12 @@ pub fn upload_dog_form(
         script {(PreEscaped(r#"
             htmx.on('#upload-form', 'htmx:xhr:progress', function(evt) {
                 htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
+            });
+            document.body.addEventListener('htmx:error', e => {
+                if (e.detail.errorInfo.pathInfo.requestPath === '/upload') {
+                    document.getElementById("new_dog_photo").classList.add("file-input-error");
+                    document.getElementById("new_dog_photo_error").innerHTML = "That file is too big!";
+                }
             });
         "#))}
     }
