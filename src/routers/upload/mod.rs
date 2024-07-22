@@ -136,9 +136,16 @@ pub fn upload_router() -> Router<AppState> {
                         image_url,
                         dog_id
                     )
-                    // .fetch_one(&state.pool)
                     .fetch_one(&mut *transaction)
                     .await;
+
+                    let client_ip: Option<String> = if let Some(ip) = context.client_ip {
+                        Some(ip.to_string())
+                    } else {
+                        None
+                    };
+                    let _ = sqlx::query!("INSERT INTO log (action, user_id, client_ip, notes) VALUES ('upload', $1, $2, $3)", context.user_id, client_ip, dog_id)
+                        .fetch_one(&mut *transaction).await;
                 }
 
                 let _ = transaction.commit().await;
