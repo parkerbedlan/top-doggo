@@ -1,4 +1,8 @@
-use crate::{layout::base, routers::doggo::name_dog::name_dog, AppContext, AppState, FormField};
+use crate::{
+    layout::{base, NavLink},
+    routers::doggo::name_dog::name_dog,
+    AppContext, AppState, FormField,
+};
 use axum::{
     body::Bytes,
     extract::{Multipart, State},
@@ -15,8 +19,8 @@ pub fn upload_router() -> Router<AppState> {
         get(|| async move {
             base(
                 upload_dog_form(FormField::empty(), FileUploadStatus::NotUploaded),
-                None,
-                None,
+                Some("Upload".to_string()),
+                Some(NavLink::Upload),
             )
         })
         .post(
@@ -222,12 +226,12 @@ pub fn upload_dog_form(
                 type="submit"
                 class="flex flex-col justify-center items-center gap-1 bg-base-200 hover:bg-base-300 active:scale-90 transition-all duration-75 rounded-md py-4 px-8 text-2xl w-full"
                 {"Add 🐕"}
-            progress id="progress" value="0" max="100" class="w-full" {}
+            // progress id="progress" value="0" max="100" class="w-full" {}
         }
         script {(PreEscaped(r#"
-            htmx.on('#upload-form', 'htmx:xhr:progress', function(evt) {
-                htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
-            });
+            // htmx.on('#upload-form', 'htmx:xhr:progress', function(evt) {
+            //     htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
+            // });
             document.body.addEventListener('htmx:error', e => {
                 if (e.detail.errorInfo.pathInfo.requestPath === '/upload') {
                     document.getElementById("new_dog_photo").classList.add("file-input-error");
