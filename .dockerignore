@@ -16,5 +16,6 @@ justfile
 
 assets/input.css
 assets/images
+unapproved
 
 # .env
