@@ -10,11 +10,10 @@ use axum::{
     extract::{Path, State},
     response::Html,
     routing::{get, patch, post},
-    Extension, Form, Router,
+    Extension, Router,
 };
 use maud::{html, Markup, PreEscaped, Render};
 use rand::{seq::SliceRandom, Rng};
-use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
 
 mod elo;
@@ -130,7 +129,7 @@ async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> 
     Some((dog_a, dog_b))
 }
 
-async fn game_board(user_id: i64, pool: &Pool<Sqlite>) -> Markup {
+async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>) -> Markup {
     let dogs = get_dog_match(user_id, pool).await;
     let Some((dog_a, dog_b)) = dogs else {
         return html! {
@@ -149,12 +148,15 @@ async fn game_board(user_id: i64, pool: &Pool<Sqlite>) -> Markup {
 
     html! {
         div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1" {
-            div class="flex flex-col gap-3 items-center w-full max-w-screen-sm px-2" {
+            div class="flex flex-col gap-3 items-center w-full max-w-screen-sm px-2 relative" {
                 h3 class="text-2xl text-center" {"Level "(get_level(xp))}
                 div class="w-full flex items-center justify-center gap-3" {
-                    div class="w-1/6 text-right" {(get_xp_remainder(xp))(PreEscaped(r#"&nbsp;"#))"xp"}
-                    progress id="xp-bar" value=(get_xp_remainder(xp)) max=(get_next_xp_target(xp)) class="[&::-webkit-progress-bar]:rounded-lg [&::-webkit-progress-value]:rounded-lg   [&::-webkit-progress-bar]:bg-base-200 [&::-webkit-progress-value]:bg-purple-400 [&::-moz-progress-bar]:bg-purple-400 w-1/2" {"foo"}
-                    div class="w-1/6" {(get_next_xp_target(xp))(PreEscaped(r#"&nbsp;"#))"xp"}
+                    div class="w-1/6 text-right" {(get_xp_remainder(xp))(PreEscaped("&nbsp;"))"xp"}
+                    progress id="xp-bar" value=(get_xp_remainder(xp)) max=(get_next_xp_target(xp)) class="[&::-webkit-progress-bar]:rounded-lg [&::-webkit-progress-value]:rounded-lg   [&::-webkit-progress-bar]:bg-base-200 [&::-webkit-progress-value]:bg-purple-400 [&::-moz-progress-bar]:bg-purple-400 w-1/2 transition-all" {"foo"}
+                    div class="w-1/6" {(get_next_xp_target(xp))(PreEscaped("&nbsp;"))"xp"}
+                }
+                @if let Some(inc) = xp_increase {
+                    div class="absolute -bottom-6 -left-50 -right-50 mx-auto animate-scale-up-down" {"+"(inc)" xp"}
                 }
             }
             h1 class="text-5xl text-center" {"Pick your favorite"}
@@ -179,7 +181,7 @@ pub fn doggo_router() -> Router<AppState> {
                 println!("ip {:?}", context.client_ip);
                 base(
                     html! {
-                        (game_board(context.user_id, &state.pool).await)
+                        (game_board(context.user_id, &state.pool, None).await)
                     },
                     None,
                     Some(NavLink::Root)
@@ -192,13 +194,13 @@ pub fn doggo_router() -> Router<AppState> {
                 let pool = &state.pool;
                 let user_id = context.user_id;
 
-                let new_game_board = || async {
-                    Html(game_board(user_id, pool).await.into_string())
+                let new_game_board = |xp_increase: Option<i64>| async move {
+                    Html(game_board(user_id, pool, xp_increase).await.into_string())
                 };
 
                 let current_dog_match = get_current_dog_match(user_id, pool).await;
                 if current_dog_match.is_none() {
-                    return new_game_board().await;
+                    return new_game_board(None).await;
                 }
                 let current_dog_match = current_dog_match.unwrap();
 
@@ -207,7 +209,7 @@ pub fn doggo_router() -> Router<AppState> {
                     else if winner == "tie" {Ok("=")}
                     else {Err(())};
                 if status.is_err() {
-                    return new_game_board().await;
+                    return new_game_board(None).await;
                 }
                 let status = status.unwrap();
 
@@ -230,7 +232,7 @@ pub fn doggo_router() -> Router<AppState> {
 
                 let _ = sqlx::query!("UPDATE user SET total_xp = total_xp + $1 WHERE id = $2", xp_increase, user_id).fetch_one(pool).await;
 
-                new_game_board().await
+                new_game_board(Some(xp_increase)).await
             }
         ))
         .route("/dedication", get(|| async move {
