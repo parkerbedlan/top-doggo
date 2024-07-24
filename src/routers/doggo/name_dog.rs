@@ -86,6 +86,13 @@ pub async fn name_dog(
     if result.is_err() {
         return Err("C'mon, something more original!".to_string());
     }
+
+    let _ = sqlx::query!(
+        "UPDATE user SET total_xp = total_xp + 200 WHERE id = $1",
+        user_id
+    )
+    .fetch_one(pool)
+    .await;
     Ok(result.unwrap().name.unwrap())
 }
 
