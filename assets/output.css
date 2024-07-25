@@ -1869,8 +1869,8 @@ input.tab:checked + .tab-content,
   position: relative;
 }
 
-.-bottom-4 {
-  bottom: -1rem;
+.-bottom-6 {
+  bottom: -1.5rem;
 }
 
 .bottom-0 {
@@ -1891,14 +1891,6 @@ input.tab:checked + .tab-content,
 
 .top-1 {
   top: 0.25rem;
-}
-
-.-bottom-3 {
-  bottom: -0.75rem;
-}
-
-.-bottom-6 {
-  bottom: -1.5rem;
 }
 
 .z-50 {
@@ -2255,6 +2247,16 @@ input.tab:checked + .tab-content,
 .text-lg {
   font-size: 1.125rem;
   line-height: 1.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
 }
 
 .lowercase {

@@ -166,10 +166,18 @@ pub fn upload_router() -> Router<AppState> {
                     }
                 }
 
+                let _ = sqlx::query!(
+                    "UPDATE user SET total_xp = total_xp + 1000 WHERE id = $1",
+                    context.user_id
+                )
+                .fetch_one(&state.pool)
+                .await;
+
                 Html(html!{
                     div class="flex-1 flex flex-col gap-4 items-center justify-center text-center" {
                         h1 class="text-4xl" {"Thanks for adding your dog!"}
                         p class="text-2xl" {"Our team will approve em, and then they'll join the squad :)"}
+                        p class="text-base" {"( Also you just got 1000xp :D )"}
                     }
                 }.into_string())
 
