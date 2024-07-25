@@ -147,8 +147,8 @@ async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>)
         .total_xp as u32;
 
     html! {
-        div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1" {
-            div class="flex flex-col gap-3 items-center w-full max-w-screen-sm px-2 relative" {
+        div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1 slide-it" {
+            div id="xp-section" class="flex flex-col gap-3 items-center w-full max-w-screen-sm px-2 relative" {
                 h3 class="text-2xl text-center" {"Level "(get_level(xp))}
                 div class="w-full flex items-center justify-center gap-3" {
                     div class="w-1/6 text-right" {(get_xp_remainder(xp))(PreEscaped("&nbsp;"))"xp"}
