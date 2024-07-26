@@ -1,6 +1,6 @@
 services:
   top-doggo:
-    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.19'
+    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.21'
     volumes:
       - '/root/top-doggo/db:/db'
       - '/root/top-doggo/images:/assets/images'

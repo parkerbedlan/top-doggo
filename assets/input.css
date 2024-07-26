@@ -86,12 +86,7 @@
 
 /* -------------------------------------------------------------------------------------------------------- */
 
-/* for development only */
-/* .htmx-request { */
-/*   background-color: red; */
-/* } */
-
-/* not sure if these are the move, stole it from https://youtu.be/x7v6SNIgJpE?si=THmL1DLeOUsO2Uvm&t=5941 */
+/* stolen from https://youtu.be/x7v6SNIgJpE?si=THmL1DLeOUsO2Uvm&t=5941 */
 .htmx-indicator {
   opacity: 0;
   transition: opactiy 500ms ease-in;

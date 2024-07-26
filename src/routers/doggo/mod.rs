@@ -152,7 +152,11 @@ async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>)
                 h3 class="text-2xl text-center" {"Level "(get_level(xp))}
                 div class="w-full flex items-center justify-center gap-3" {
                     div class="w-1/6 text-right" {(get_xp_remainder(xp))(PreEscaped("&nbsp;"))"xp"}
-                    progress id="xp-bar" value=(get_xp_remainder(xp)) max=(get_next_xp_target(xp)) class="[&::-webkit-progress-bar]:rounded-lg [&::-webkit-progress-value]:rounded-lg   [&::-webkit-progress-bar]:bg-base-200 [&::-webkit-progress-value]:bg-purple-400 [&::-moz-progress-bar]:bg-purple-400 w-1/2 transition-all" {"foo"}
+                    div id="xp-bar-wrapper" class="w-1/2 h-5 rounded-full bg-base-200 overflow-hidden" {
+                        div id="xp-bar" class="w-full h-full rounded-full bg-purple-400 transition-all duration-1000"
+                        style={"transform: translateX(-"((1.0 - (get_xp_remainder(xp) as f64 / get_next_xp_target(xp) as f64))*100.0)"%);"}
+                        {}
+                    }
                     div class="w-1/6" {(get_next_xp_target(xp))(PreEscaped("&nbsp;"))"xp"}
                 }
                 @if let Some(inc) = xp_increase {

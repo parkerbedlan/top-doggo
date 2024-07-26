@@ -1944,6 +1944,10 @@ input.tab:checked + .tab-content,
   height: 7rem;
 }
 
+.h-5 {
+  height: 1.25rem;
+}
+
 .h-full {
   height: 100%;
 }
@@ -2018,6 +2022,10 @@ input.tab:checked + .tab-content,
 
 .flex-shrink-0 {
   flex-shrink: 0;
+}
+
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 @keyframes scale-up-down {
@@ -2098,6 +2106,10 @@ input.tab:checked + .tab-content,
   overflow: auto;
 }
 
+.overflow-hidden {
+  overflow: hidden;
+}
+
 .overflow-x-auto {
   overflow-x: auto;
 }
@@ -2158,6 +2170,11 @@ input.tab:checked + .tab-content,
 .bg-base-200 {
   --tw-bg-opacity: 1;
   background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity)));
+}
+
+.bg-purple-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(192 132 252 / var(--tw-bg-opacity));
 }
 
 .bg-success {
@@ -2301,6 +2318,10 @@ input.tab:checked + .tab-content,
   transition-duration: 150ms;
 }
 
+.duration-1000 {
+  transition-duration: 1000ms;
+}
+
 .duration-75 {
   transition-duration: 75ms;
 }
@@ -2405,15 +2426,7 @@ input.tab:checked + .tab-content,
 
 /* -------------------------------------------------------------------------------------------------------- */
 
-/* for development only */
-
-/* .htmx-request { */
-
-/*   background-color: red; */
-
-/* } */
-
-/* not sure if these are the move, stole it from https://youtu.be/x7v6SNIgJpE?si=THmL1DLeOUsO2Uvm&t=5941 */
+/* stolen from https://youtu.be/x7v6SNIgJpE?si=THmL1DLeOUsO2Uvm&t=5941 */
 
 .htmx-indicator {
   opacity: 0;
@@ -2589,29 +2602,6 @@ input.tab:checked + .tab-content,
   .md\:gap-16 {
     gap: 4rem;
   }
-}
-
-.\[\&\:\:-moz-progress-bar\]\:bg-purple-400::-moz-progress-bar {
-  --tw-bg-opacity: 1;
-  background-color: rgb(192 132 252 / var(--tw-bg-opacity));
-}
-
-.\[\&\:\:-webkit-progress-bar\]\:rounded-lg::-webkit-progress-bar {
-  border-radius: 0.5rem;
-}
-
-.\[\&\:\:-webkit-progress-bar\]\:bg-base-200::-webkit-progress-bar {
-  --tw-bg-opacity: 1;
-  background-color: var(--fallback-b2,oklch(var(--b2)/var(--tw-bg-opacity)));
-}
-
-.\[\&\:\:-webkit-progress-value\]\:rounded-lg::-webkit-progress-value {
-  border-radius: 0.5rem;
-}
-
-.\[\&\:\:-webkit-progress-value\]\:bg-purple-400::-webkit-progress-value {
-  --tw-bg-opacity: 1;
-  background-color: rgb(192 132 252 / var(--tw-bg-opacity));
 }
 
 .\[\&_\*\]\:text-2xl * {
