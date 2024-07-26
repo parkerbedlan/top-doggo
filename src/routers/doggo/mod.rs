@@ -160,12 +160,12 @@ async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>)
                 }
             }
             h1 class="text-5xl text-center" {"Pick your favorite"}
-            div class="flex justify-center gap-6 w-full sample-transition" {
+            div class="flex justify-center gap-6 w-full vt-slide-up" {
                 (dog_a)
                 (dog_b)
             }
             div class="flex justify-center -mt-2" {
-                button hx-post="/pick-winner/tie" hx-target="#game-board" hx-swap="outerHTML transition:true" class="flex flex-col justify-center items-center gap-1 bg-base-200 hover:bg-base-300 active:scale-90 transition-all duration-75 rounded-md w-28 h-28 p-8" {
+                button hx-post="/pick-winner/tie" hx-target="#game-board" hx-swap="outerHTML transition:true" class="flex flex-col justify-center items-center gap-1 bg-base-200 hover:bg-base-300 active:scale-90 transition-all duration-75 rounded-md w-28 h-28 p-8 vt-stay-on-top" {
                     div class="text-6xl" {"="}
                     div class="text-lg" {"Tie"}
                 }

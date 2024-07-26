@@ -3,52 +3,85 @@
 @tailwind utilities;
 
 /* -------------------------------------------------------------------------------------------------------- */
-
-/* not sure if this is necessary or not */
-/* @view-transition { */
-/*   navigation: auto; */
-/* } */
-
 /* https://htmx.org/essays/view-transitions/ */
+
+@keyframes do-nothing {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+::view-transition-old(vt-stay-on-top, vt-stay-on-top-2) {
+  animation: 0s linear both do-nothing;
+}
+::view-transition-new(vt-stay-on-top, vt-stay-on-top-2) {
+  animation: 0s linear both do-nothing;
+}
+.vt-stay-on-top {
+  view-transition-name: vt-stay-on-top;
+}
+.vt-stay-on-top2 {
+  view-transition-name: vt-stay-on-top-2;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
   }
 }
-
 @keyframes fade-out {
   to {
     opacity: 0;
   }
 }
-
 @keyframes slide-from-right {
   from {
     transform: translateX(90px);
   }
 }
-
 @keyframes slide-to-left {
   to {
     transform: translateX(-90px);
   }
 }
-
-/* define animations for the old and new content */
-::view-transition-old(slide-it) {
+::view-transition-old(vt-slide-left) {
   animation:
     180ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
     600ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
 }
-::view-transition-new(slide-it) {
+::view-transition-new(vt-slide-left) {
   animation:
     420ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
     600ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
 }
+.vt-slide-left {
+  view-transition-name: vt-slide-left;
+}
 
-/* tie the view transition to a given CSS class */
-.sample-transition {
-  view-transition-name: slide-it;
+@keyframes slide-to-top {
+  to {
+    transform: translateY(-100dvh);
+  }
+}
+@keyframes slide-from-bottom {
+  from {
+    transform: translateY(100dvh);
+  }
+}
+::view-transition-old(vt-slide-up) {
+  animation:
+    /* 300ms cubic-bezier(0.4, 0, 1, 1) both fade-out, */ 1s
+    cubic-bezier(0.4, 0, 0.2, 1) both slide-to-top;
+}
+::view-transition-new(vt-slide-up) {
+  animation:
+    /* 600ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in, */ 1s
+    cubic-bezier(0.4, 0, 0.2, 1) both slide-from-bottom;
+}
+.vt-slide-up {
+  view-transition-name: vt-slide-up;
 }
 
 /* -------------------------------------------------------------------------------------------------------- */

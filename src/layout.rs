@@ -97,7 +97,7 @@ pub enum NavLink {
 
 fn navbar(active_nav_link: Option<NavLink>) -> Markup {
     html! {
-        footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-base-200 flex justify-center items-center border-base-100 border-t" {
+        footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-base-200 flex justify-center items-center border-base-100 border-t vt-stay-on-top2" {
             div class="w-full h-full flex justify-around items-center max-w-screen-lg" {
                 (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(link) = active_nav_link {link == NavLink::Root} else {false}))
                 (nav_link(html! {div class="text-9xl text-yellow-500" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
