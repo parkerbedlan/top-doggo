@@ -2303,9 +2303,15 @@ input.tab:checked + .tab-content,
 
 /* -------------------------------------------------------------------------------------------------------- */
 
-@view-transition {
-  navigation: auto;
-}
+/* not sure if this is necessary or not */
+
+/* @view-transition { */
+
+/*   navigation: auto; */
+
+/* } */
+
+/* https://htmx.org/essays/view-transitions/ */
 
 @keyframes fade-in {
   from {
@@ -2331,9 +2337,7 @@ input.tab:checked + .tab-content,
   }
 }
 
-.slide-it {
-  view-transition-name: slide-it;
-}
+/* define animations for the old and new content */
 
 ::view-transition-old(slide-it) {
   animation:
@@ -2345,6 +2349,12 @@ input.tab:checked + .tab-content,
   animation:
     420ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
     600ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+/* tie the view transition to a given CSS class */
+
+.sample-transition {
+  view-transition-name: slide-it;
 }
 
 /* -------------------------------------------------------------------------------------------------------- */
