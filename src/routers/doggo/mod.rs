@@ -3,7 +3,10 @@ use std::cmp;
 pub use self::elo::RatingType;
 use crate::{
     layout::{base, NavLink},
-    routers::doggo::xp::{get_level, get_next_xp_target, get_xp_remainder},
+    routers::doggo::xp::{
+        get_xp, get_xp_increase_from_pick,
+        xp_section,
+    },
     AppContext, AppState, FormField,
 };
 use axum::{
@@ -12,8 +15,8 @@ use axum::{
     routing::{get, patch, post},
     Extension, Router,
 };
-use maud::{html, Markup, PreEscaped, Render};
-use rand::{seq::SliceRandom, Rng};
+use maud::{html, Markup, Render};
+use rand::{seq::SliceRandom};
 use sqlx::{Pool, Sqlite};
 
 mod elo;
@@ -129,7 +132,7 @@ async fn get_dog_match(user_id: i64, pool: &Pool<Sqlite>) -> Option<(Dog, Dog)> 
     Some((dog_a, dog_b))
 }
 
-async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>) -> Markup {
+async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<u32>) -> Markup {
     let dogs = get_dog_match(user_id, pool).await;
     let Some((dog_a, dog_b)) = dogs else {
         return html! {
@@ -140,29 +143,11 @@ async fn game_board(user_id: i64, pool: &Pool<Sqlite>, xp_increase: Option<i64>)
         };
     };
 
-    let xp = sqlx::query!("SELECT total_xp FROM user WHERE id = $1", user_id)
-        .fetch_one(pool)
-        .await
-        .unwrap()
-        .total_xp as u32;
+    let xp = get_xp(pool, user_id).await;
 
     html! {
         div id="game-board" class="flex flex-col items-center justify-center gap-6 flex-1" {
-            div id="xp-section" class="flex flex-col gap-3 items-center w-full max-w-screen-sm px-2 relative" {
-                h3 class="text-2xl text-center" {"Level "(get_level(xp))}
-                div class="w-full flex items-center justify-center gap-3" {
-                    div class="w-1/6 text-right" {(get_xp_remainder(xp))(PreEscaped("&nbsp;"))"xp"}
-                    div id="xp-bar-wrapper" class="w-1/2 h-5 rounded-full bg-base-200 overflow-hidden" {
-                        div id="xp-bar" class="w-full h-full rounded-full bg-purple-400 transition-all duration-1000"
-                        style={"transform: translateX(-"((1.0 - (get_xp_remainder(xp) as f64 / get_next_xp_target(xp) as f64))*100.0)"%);"}
-                        {}
-                    }
-                    div class="w-1/6" {(get_next_xp_target(xp))(PreEscaped("&nbsp;"))"xp"}
-                }
-                @if let Some(inc) = xp_increase {
-                    div class="absolute -bottom-6 -left-50 -right-50 mx-auto animate-scale-up-down" {"+"(inc)" xp"}
-                }
-            }
+            (xp_section(xp, xp_increase, false))
             h1 class="text-5xl text-center" {"Pick your favorite"}
             div class="flex justify-center gap-6 w-full vt-slide-up" {
                 (dog_a)
@@ -198,7 +183,7 @@ pub fn doggo_router() -> Router<AppState> {
                 let pool = &state.pool;
                 let user_id = context.user_id;
 
-                let new_game_board = |xp_increase: Option<i64>| async move {
+                let new_game_board = |xp_increase: Option<u32>| async move {
                     Html(game_board(user_id, pool, xp_increase).await.into_string())
                 };
 
@@ -226,13 +211,9 @@ pub fn doggo_router() -> Router<AppState> {
 
                 struct SecondsRecord {seconds: Option<i64>}
                 let seconds_deliberated = sqlx::query_as!(SecondsRecord, "select CAST ((JulianDay(updated_at) - JulianDay(created_at)) * 24 * 60 * 60 AS INTEGER) as seconds FROM match WHERE id = $1 AND created_at IS NOT NULL AND updated_at IS NOT NULL", current_dog_match.id).fetch_one(pool).await.unwrap_or(SecondsRecord { seconds: Some(5) }).seconds.unwrap();
-                let seconds_deliberated = cmp::min(5, seconds_deliberated);
+                let seconds_deliberated = cmp::min(5, seconds_deliberated) as u32;
 
-                let xp_increase = if seconds_deliberated < 2 {1} else {
-                    let lower_bound = seconds_deliberated * 6;
-                    let upper_bound = seconds_deliberated * 14;
-                    rand::thread_rng().gen_range(lower_bound..=upper_bound)
-                };
+                let xp_increase: u32 = get_xp_increase_from_pick(seconds_deliberated);
 
                 let _ = sqlx::query!("UPDATE user SET total_xp = total_xp + $1 WHERE id = $2", xp_increase, user_id).fetch_one(pool).await;
 

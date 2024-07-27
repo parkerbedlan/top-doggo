@@ -79,7 +79,7 @@ pub async fn update_ratings(
                                  dog_a_id,
                                  dog_b_id
                                 ).fetch_one(pool).await;
-            ()
+            
         }
         RatingType::Personal => {
             let rating_change_a = i32::from(new_rating_a) - i32::from(current_rating_a);
@@ -91,7 +91,7 @@ pub async fn update_ratings(
                                  dog_a_id,
                                  dog_b_id
                                 ).fetch_one(pool).await;
-            ()
+            
         }
     }
 
@@ -189,7 +189,7 @@ async fn get_num_matches(
 
 fn get_my_expected_score(my_current_rating: u16, their_current_rating: u16) -> f64 {
     (1.0 + 10_f64
-        .powf(f64::from(f64::from(their_current_rating) - f64::from(my_current_rating)) / 400.0))
+        .powf((f64::from(their_current_rating) - f64::from(my_current_rating)) / 400.0))
     .powf(-1.0)
 }
 

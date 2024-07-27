@@ -1,4 +1,7 @@
-use crate::{AppContext, AppState, FormField};
+use crate::{
+    routers::doggo::xp::{get_xp, xp_section, XP_INCREASE_FOR_NAME_DOG},
+    AppContext, AppState, FormField,
+};
 use axum::{
     extract::State,
     response::{Html, IntoResponse},
@@ -37,11 +40,7 @@ pub async fn name_dog_router(
         return err(&error);
     }
 
-    let client_ip: Option<String> = if let Some(ip) = context.client_ip {
-        Some(ip.to_string())
-    } else {
-        None
-    };
+    let client_ip: Option<String> = context.client_ip.map(|ip| ip.to_string());
     let _ = sqlx::query!(
         "INSERT INTO log (action, user_id, client_ip, notes) VALUES ('name-dog', $1, $2, $3)",
         context.user_id,
@@ -51,7 +50,14 @@ pub async fn name_dog_router(
     .fetch_one(&state.pool)
     .await;
 
-    Html(html! {div class="text-3xl" {(result.unwrap())}}.into_string())
+    Html(
+        html! {
+            div class="text-3xl" {(result.unwrap())}
+            (xp_section(get_xp(&state.pool, context.user_id).await, Some(XP_INCREASE_FOR_NAME_DOG), true))
+
+        }
+        .into_string(),
+    )
 }
 
 pub async fn name_dog(
@@ -88,7 +94,8 @@ pub async fn name_dog(
     }
 
     let _ = sqlx::query!(
-        "UPDATE user SET total_xp = total_xp + 200 WHERE id = $1",
+        "UPDATE user SET total_xp = total_xp + $1 WHERE id = $2",
+        XP_INCREASE_FOR_NAME_DOG,
         user_id
     )
     .fetch_one(pool)
