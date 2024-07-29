@@ -69,6 +69,9 @@ pub async fn name_dog(
     if new_name == "Jeff" {
         return Err("NO, don't name him Jeff >:(".to_string());
     }
+    if new_name.len() > 100 {
+        return Err("Maybe something a little shorter?".to_string());
+    }
     let dog = sqlx::query!("SELECT name FROM dog WHERE id = $1", dog_id)
         .fetch_optional(pool)
         .await
