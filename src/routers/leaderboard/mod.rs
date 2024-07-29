@@ -63,8 +63,7 @@ pub fn leaderboard_router() -> Router<AppState> {
                                 (tab(RatingType::Overall, rating_type == RatingType::Overall))
                                 (tab(RatingType::Personal, rating_type == RatingType::Personal))
                             }
-                            // switch to overflow-x-auto when you add more columns
-                            div class="overflow-x-hidden" {
+                            div class="overflow-x-auto" {
                                 table class="table table-sm table-zebra [&_*]:text-2xl overflow-x-auto" {
                                     thead {
                                         tr {
