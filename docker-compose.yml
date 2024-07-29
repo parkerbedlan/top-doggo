@@ -1,33 +1,37 @@
 services:
-  top-doggo:
-    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.21'
+  top-doggo-2:
+    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.26'
     volumes:
       - '/root/top-doggo/db:/db'
       - '/root/top-doggo/images:/assets/images'
       - '/root/top-doggo/unapproved:/unapproved'
     networks:
-      jw0s4ck: null
+      csocgok: null
     labels:
       - coolify.managed=true
       - coolify.version=4.0.0-beta.306
       - coolify.serviceId=1
       - coolify.type=service
-      - coolify.name=top-doggo-jw0s4ck
+      - coolify.name=top-doggo-2-csocgok
       - coolify.pullRequestId=0
       - coolify.service.subId=1
       - coolify.service.subType=application
       - traefik.enable=true
-      - traefik.http.routers.top-doggo.rule=Host(`doggo.parkerbedlan.com`)
-      - traefik.http.routers.top-doggo.entrypoints=https
-      - traefik.http.routers.top-doggo.tls=true
-      - traefik.http.routers.top-doggo.tls.certresolver=letsencrypt
-      - traefik.http.services.top-doggo.loadbalancer.server.port=3000
+      - 'traefik.http.routers.top-doggo-2.rule=Host(`topdoggo.app`) || Host(`www.topdoggo.app`) || Host(`doggo.parkerbedlan.com`)'
+      - traefik.http.routers.top-doggo-2.entrypoints=https
+      - traefik.http.routers.top-doggo-2.tls=true
+      - traefik.http.routers.top-doggo-2.tls.certresolver=letsencrypt
+      - traefik.http.services.top-doggo-2.loadbalancer.server.port=3000
+      - 'traefik.http.middlewares.top-doggo-2-redirect.redirectregex.regex=^https?://(www\.topdoggo\.app|doggo\.parkerbedlan\.com)(.*)'
+      - 'traefik.http.middlewares.top-doggo-2-redirect.redirectregex.replacement=https://topdoggo.app${2}'
+      # - traefik.http.middlewares.top-doggo-2-redirect.redirectregex.permanent=true
+      - traefik.http.routers.top-doggo-2.middlewares=top-doggo-2-redirect
     restart: unless-stopped
-    container_name: top-doggo-jw0s4ck
+    container_name: top-doggo-2-csocgok
     environment:
-      COOLIFY_CONTAINER_NAME: top-doggo-jw0s4ck
+      COOLIFY_CONTAINER_NAME: top-doggo-2-csocgok
 volumes: {  }
 networks:
-  jw0s4ck:
-    name: jw0s4ck
+  csocgok:
+    name: csocgok
     external: true
