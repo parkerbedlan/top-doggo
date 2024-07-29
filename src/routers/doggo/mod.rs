@@ -1,12 +1,7 @@
-use std::cmp;
-
 pub use self::elo::RatingType;
 use crate::{
     layout::{base, NavLink},
-    routers::doggo::xp::{
-        get_xp, get_xp_increase_from_pick,
-        xp_section,
-    },
+    routers::doggo::xp::{get_xp, get_xp_increase_from_pick, xp_section},
     AppContext, AppState, FormField,
 };
 use axum::{
@@ -16,8 +11,9 @@ use axum::{
     Extension, Router,
 };
 use maud::{html, Markup, Render};
-use rand::{seq::SliceRandom};
+use rand::seq::SliceRandom;
 use sqlx::{Pool, Sqlite};
+use std::cmp;
 
 mod elo;
 pub mod name_dog;
@@ -37,7 +33,7 @@ impl Render for Dog {
                     img class="object-center object-cover aspect-square w-full" src=(self.image_url) ;
                 }
                 @if let Some(name) = &self.name {
-                    div class="text-3xl" {(name)}
+                    div class="text-3xl break-words max-w-full" {(name)}
                 } @else {
                     (name_dog::name_dog_form(self.id, FormField::empty()))
                 }
