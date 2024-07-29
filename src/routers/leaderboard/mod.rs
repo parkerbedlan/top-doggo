@@ -82,7 +82,7 @@ pub fn leaderboard_router() -> Router<AppState> {
                                             tr {
                                                 th {(i+1)}
                                                 td class="min-w-32" {img class="object-center object-cover aspect-square w-32" src=(rating.image_url) ;}
-                                                td {(name_display)}
+                                                td class="break-words max-w-36" {(name_display)}
                                                 td {(rating.value)}
                                             }
                                         }

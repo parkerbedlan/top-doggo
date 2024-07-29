@@ -2012,6 +2012,14 @@ input.tab:checked + .tab-content,
   max-width: 24rem;
 }
 
+.max-w-36 {
+  max-width: 9rem;
+}
+
+.max-w-40 {
+  max-width: 10rem;
+}
+
 .flex-1 {
   flex: 1 1 0%;
 }
@@ -2116,6 +2124,10 @@ input.tab:checked + .tab-content,
 
 .overflow-x-hidden {
   overflow-x: hidden;
+}
+
+.break-words {
+  overflow-wrap: break-word;
 }
 
 .rounded-full {
