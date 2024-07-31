@@ -18,6 +18,7 @@ use lettre::{
 };
 use maud::{html, Markup, PreEscaped};
 use serde::Deserialize;
+use sqlx::{Pool, Sqlite};
 use std::{env, str::FromStr};
 use uuid::Uuid;
 
@@ -44,46 +45,11 @@ pub fn me_router() -> Router<AppState> {
             post(|State(state): State<AppState>, Form(form): Form<SendMagicLinkFormParams>| async move {
                 println!("Sending email...");
 
-                let to_address: Result<Mailbox, AddressError> = format!("Top Doggo Judge <{}>", form.email_address).parse();
-                if to_address.is_err() {
-                    return Html(send_magic_link_form(
-                        FormField {
-                            value: form.email_address,
-                            error: "Invalid Email".to_string()
-                    }).into_string())
-                }
-                let to_address = to_address.unwrap();
-
-                let magic_token = Uuid::new_v4().to_string();
-                let _ = sqlx::query!("INSERT INTO email_token (token, email_address) VALUES ($1, $2)", magic_token, form.email_address)
-                    .fetch_one(&state.pool).await;
-
-                let email = Message::builder()
-                    .from("Top Doggo <parkerbedlan@gmail.com>".to_string().parse().unwrap())
-                    .to(to_address)
-                    .subject("Top Doggo - Your Magic Link")
-                    .header(ContentType::TEXT_HTML)
-                    .body(html!{
-                        h1 {"Magic Link for Top Doggo"}
-                        h3 {"Follow this link to log in to the platform:"}
-                        a href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
-                    }.into_string())
-                    .unwrap();
-
-                let creds = Credentials::new(
-                    env::var("SMTP_USERNAME").expect("SMTP Username not specified "),
-                    env::var("SMTP_PASSWORD").expect("SMTP Password not specified"),
-                );
-
-                let mailer =
-                    SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP Host not specified"))
-                        .unwrap()
-                        .credentials(creds)
-                        .build();
-
-                match mailer.send(&email) {
-                    Ok(_) => println!("Email sent successfully!"),
-                    Err(e) => return Html(html!{ p class="text-error" {(format!("Could not send email: {:?}", e))}}.into_string()),
+                let email_sent = send_magic_link_email(&state.pool, &form.email_address).await;
+                if email_sent.is_err() {
+                    return Html(
+                        send_magic_link_form(FormField{value: form.email_address, error: "Invalid Email".to_string()})
+                    .into_string());
                 }
 
                 return Html(html! {
@@ -103,6 +69,56 @@ pub fn me_router() -> Router<AppState> {
         }))
 }
 
+async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> Result<(), ()> {
+    let to_address: Result<Mailbox, AddressError> =
+        format!("Top Doggo Judge <{}>", to_email_address).parse();
+    if to_address.is_err() {
+        return Err(());
+    }
+    let to_address = to_address.unwrap();
+
+    let magic_token = Uuid::new_v4().to_string();
+    let _ = sqlx::query!(
+        "INSERT INTO email_token (token, email_address) VALUES ($1, $2)",
+        magic_token,
+        to_email_address
+    )
+    .fetch_one(pool)
+    .await;
+
+    let email = Message::builder()
+                    .from("Top Doggo <parkerbedlan@gmail.com>".to_string().parse().unwrap())
+                    .to(to_address)
+                    .subject("Top Doggo - Your Magic Link")
+                    .header(ContentType::TEXT_HTML)
+                    .body(html!{
+                        h1 {"Magic Link for Top Doggo"}
+                        h3 {"Follow this link to log in to the platform:"}
+                        a href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
+                    }.into_string())
+                    .unwrap();
+
+    let creds = Credentials::new(
+        env::var("SMTP_USERNAME").expect("SMTP Username not specified "),
+        env::var("SMTP_PASSWORD").expect("SMTP Password not specified"),
+    );
+
+    let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP Host not specified"))
+        .unwrap()
+        .credentials(creds)
+        .build();
+
+    match mailer.send(&email) {
+        Ok(_) => println!("Email sent successfully!"),
+        Err(e) => {
+            println!("Email failed to send: {}", e);
+            return Err(());
+        }
+    }
+
+    Ok(())
+}
+
 #[derive(Deserialize)]
 struct SendMagicLinkFormParams {
     email_address: String,
@@ -119,7 +135,7 @@ fn send_magic_link_form(email_address: FormField<String>) -> Markup {
             p {(PreEscaped("&nbsp;"))"( and earn 2000xp :O )"}
         }
         div class="flex gap-2 flex-wrap max-w-screen-sm justify-center" {
-            div class="flex flex-col max-w-72 min-w-52 basis-52 shrink grow" {
+            div class="flex flex-col max-w-72 min-w-52 basis-52 shrink grow items-start" {
                 input type="email"
                     name="email_address"
                     id="email_address"
