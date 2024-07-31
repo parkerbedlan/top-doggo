@@ -20,3 +20,5 @@ target/
 node_modules
 *.db*
 unapproved
+.env
+.env.prod

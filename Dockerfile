@@ -11,6 +11,8 @@ RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static
 # for nonalpine, but probably generally unnecessary
 # RUN apt-get update && apt-get install -y sqlite3 libsqlite3-dev
 # RUN sqlite3 --version
+COPY .env.prod .env
+
 
 COPY Cargo.* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs

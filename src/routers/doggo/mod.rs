@@ -17,7 +17,7 @@ use std::cmp;
 
 mod elo;
 pub mod name_dog;
-mod xp;
+pub mod xp;
 
 #[derive(Debug)]
 struct Dog {
