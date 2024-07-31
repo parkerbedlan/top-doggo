@@ -69,34 +69,19 @@ pub fn me_router() -> Router<AppState> {
         }))
 }
 
-async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> Result<(), ()> {
-    let to_address: Result<Mailbox, AddressError> =
-        format!("Top Doggo Judge <{}>", to_email_address).parse();
-    if to_address.is_err() {
-        return Err(());
-    }
-    let to_address = to_address.unwrap();
-
-    let magic_token = Uuid::new_v4().to_string();
-    let _ = sqlx::query!(
-        "INSERT INTO email_token (token, email_address) VALUES ($1, $2)",
-        magic_token,
-        to_email_address
-    )
-    .fetch_one(pool)
-    .await;
-
+async fn send_email(to_mailbox: Mailbox, subject: &str, content: Markup) -> Result<(), ()> {
     let email = Message::builder()
-                    .from("Top Doggo <parkerbedlan@gmail.com>".to_string().parse().unwrap())
-                    .to(to_address)
-                    .subject("Top Doggo - Your Magic Link")
-                    .header(ContentType::TEXT_HTML)
-                    .body(html!{
-                        h1 {"Magic Link for Top Doggo"}
-                        h3 {"Follow this link to log in to the platform:"}
-                        a href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
-                    }.into_string())
-                    .unwrap();
+        .from(
+            "Top Doggo <parkerbedlan@gmail.com>"
+                .to_string()
+                .parse()
+                .unwrap(),
+        )
+        .to(to_mailbox)
+        .subject(subject)
+        .header(ContentType::TEXT_HTML)
+        .body(content.into_string())
+        .unwrap();
 
     let creds = Credentials::new(
         env::var("SMTP_USERNAME").expect("SMTP Username not specified "),
@@ -117,6 +102,31 @@ async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> R
     }
 
     Ok(())
+}
+async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> Result<(), ()> {
+    let to_mailbox: Result<Mailbox, AddressError> =
+        format!("Top Doggo Judge <{}>", to_email_address).parse();
+    if to_mailbox.is_err() {
+        return Err(());
+    }
+    let to_mailbox = to_mailbox.unwrap();
+
+    let magic_token = Uuid::new_v4().to_string();
+    let _ = sqlx::query!(
+        "INSERT INTO email_token (token, email_address) VALUES ($1, $2)",
+        magic_token,
+        to_email_address
+    )
+    .fetch_one(pool)
+    .await;
+
+    send_email(to_mailbox, "Top Doggo - Your Magic Link",
+        html!{
+            h1 {"Magic Link for Top Doggo"}
+            h3 {"Follow this link to log in to the platform:"}
+            a href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
+        }
+    ).await
 }
 
 #[derive(Deserialize)]
