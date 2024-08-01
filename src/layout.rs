@@ -37,7 +37,8 @@ pub fn layout(
                         document.addEventListener("DOMContentLoaded", () => {
                             htmx.config.useTemplateFragments = true;
                             // https://htmx.org/events/
-                            // htmx.logAll() in console to see all the events as they happen!
+                            // to see all the events as they happen
+                            // htmx.logAll()
                             document.body.addEventListener("htmx:beforeSwap", (event) => {
                                 if (event.detail.xhr.status === 422) {
                                     event.detail.shouldSwap = true;
@@ -47,7 +48,7 @@ pub fn layout(
                             })
                         })
                 "#))}
-            // script src="https://unpkg.com/hyperscript.org@0.9.12" {}
+            script src="https://unpkg.com/hyperscript.org@0.9.12" {}
             // FOR PROD comment out the tailwind cdn
             // script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";

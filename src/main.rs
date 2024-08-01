@@ -22,6 +22,7 @@ pub struct AppState {
 #[derive(Debug, Clone)]
 struct AppContext {
     user_id: i64,
+    user_email: Option<String>,
     client_ip: Option<std::net::IpAddr>,
 }
 

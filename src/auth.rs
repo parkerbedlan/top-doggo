@@ -7,8 +7,10 @@ use axum::{
 };
 use axum_client_ip::XForwardedFor;
 use chrono::{Duration, Utc};
+use sqlx::{Pool, Sqlite};
 use uuid::Uuid;
 
+// probably not worth renaming (it would sign everybody out)
 const AUTH_TOKEN_COOKIE_NAME: &str = "best_doggo_auth_token";
 
 pub async fn auth<B>(
@@ -34,6 +36,7 @@ pub async fn auth<B>(
             })
         })
         .unwrap_or_default();
+    // println!("original auth token: {}", original_auth_token);
 
     let mut new_auth_token: Option<String> = None;
 
@@ -52,39 +55,57 @@ pub async fn auth<B>(
             .unwrap();
         let new_user_id = new_user.id;
 
-        let new_token = Uuid::new_v4().to_string();
-        let _ = sqlx::query!(
-            "INSERT INTO session (token, user_id) VALUES ($1, $2)",
-            new_token,
-            new_user_id
-        )
-        .fetch_one(&state.pool)
-        .await;
-
-        new_auth_token = Some(new_token);
+        new_auth_token = Some(create_new_auth_token(&state.pool, new_user_id).await);
 
         new_user_id
     };
 
+    let user_email: Option<String> = sqlx::query!("SELECT email FROM user WHERE id=$1", user_id)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap()
+        .email;
+
     // let client_ip = Some(secure_client_ip.0);
     let client_ip = client_ips.first().cloned();
-    let app_context = AppContext { user_id, client_ip };
+
+    let app_context = AppContext {
+        user_id,
+        user_email,
+        client_ip,
+    };
     req.extensions_mut().insert(app_context);
 
     let mut response = next.run(req).await;
 
     if let Some(token) = new_auth_token {
         // Set the updated cookie in the response
-        let expiration = Utc::now() + Duration::days(365 * 10);
-        let expiration = expiration.format("%a, %d %b %Y %H:%M:%S GMT");
-        let new_cookie = format!(
-            "{}={}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires={}",
-            AUTH_TOKEN_COOKIE_NAME, token, expiration
+        response.headers_mut().insert(
+            http::header::SET_COOKIE,
+            create_new_auth_cookie(token).parse().unwrap(),
         );
-        response
-            .headers_mut()
-            .insert(http::header::SET_COOKIE, new_cookie.parse().unwrap());
     }
 
     Ok(response)
+}
+
+pub fn create_new_auth_cookie(token: String) -> String {
+    let expiration = Utc::now() + Duration::days(365 * 10);
+    let expiration = expiration.format("%a, %d %b %Y %H:%M:%S GMT");
+    format!(
+        "{}={}; Path=/; HttpOnly; Secure; SameSite=Strict; Expires={}",
+        AUTH_TOKEN_COOKIE_NAME, token, expiration
+    )
+}
+
+pub async fn create_new_auth_token(pool: &Pool<Sqlite>, user_id: i64) -> String {
+    let new_token = Uuid::new_v4().to_string();
+    let _ = sqlx::query!(
+        "INSERT INTO session (token, user_id) VALUES ($1, $2)",
+        new_token,
+        user_id
+    )
+    .fetch_one(pool)
+    .await;
+    return new_token;
 }
