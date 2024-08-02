@@ -42,6 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .nest("/", routers::doggo())
         .nest("/upload", routers::upload())
         .nest("/", routers::me())
+        .nest("/test", routers::test::test_router())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
         .layer(TraceLayer::new_for_http())

@@ -1,6 +1,7 @@
 services:
   top-doggo:
-    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.28'
+    network_mode: host
+    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.33'
     volumes:
       - '/root/top-doggo/db:/db'
       - '/root/top-doggo/images:/assets/images'

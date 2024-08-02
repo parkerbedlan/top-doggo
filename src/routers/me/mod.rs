@@ -8,7 +8,7 @@ use axum::{
 use lettre::{
     address::AddressError,
     message::{header::ContentType, Mailbox},
-    transport::smtp::authentication::Credentials,
+    transport::smtp::{authentication::Credentials, client::TlsParameters},
     Message, SmtpTransport, Transport,
 };
 use maud::{html, Markup, PreEscaped};
@@ -195,9 +195,13 @@ async fn send_email(to_mailbox: Mailbox, subject: &str, content: Markup) -> Resu
         env::var("SMTP_PASSWORD").expect("SMTP Password not specified"),
     );
 
+    // necessary to set to port 587 due to https://docs.hetzner.com/cloud/servers/faq/#why-can-i-not-send-any-mails-from-my-server
+    let tls_parameters = TlsParameters::new(env::var("SMTP_HOST").expect("SMTP Host not specified")).unwrap();
     let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP Host not specified"))
         .unwrap()
+        .port(587)
         .credentials(creds)
+        .tls(lettre::transport::smtp::client::Tls::Required(tls_parameters))
         .build();
 
     match mailer.send(&email) {
