@@ -68,8 +68,9 @@ pub fn me_router() -> Router<AppState> {
             Extension(context): Extension<AppContext>,
             Query(params): Query<LoginParams>
         | async move {
-            println!("Logging in...");
-            println!("token: {}", params.token);
+            println!("/login");
+            println!("using token: {}", params.token);
+            println!("context.user_id: {}", context.user_id);
 
             let token_record = sqlx::query!("SELECT email, sender_id FROM email_token WHERE token=$1 AND created_at > datetime('now', '-30 minutes')", params.token)
                 .fetch_optional(&state.pool)
@@ -98,6 +99,7 @@ pub fn me_router() -> Router<AppState> {
                         }
                     )
                 } else {
+                    println!("Already logged in as {}, redirecting to /me", token_email);
                     return (
                         StatusCode::TEMPORARY_REDIRECT,
                         {

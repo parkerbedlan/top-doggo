@@ -104,7 +104,7 @@ fn navbar(active_nav_link: Option<NavLink>) -> Markup {
                 (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(link) = active_nav_link {link == NavLink::Root} else {false}))
                 (nav_link(html! {div class="text-9xl text-secondary" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
                 (nav_link(html! {div class="text-9xl text-accent" {(upload_icon())}}, "/upload", if let Some(link) = active_nav_link {link == NavLink::Upload} else {false}))
-                (nav_link(html! {div class="text-9xl text-accent" {(me_icon())}}, "/me", if let Some(link) = active_nav_link {link == NavLink::Me} else {false}))
+                // (nav_link(html! {div class="text-9xl text-accent" {(me_icon())}}, "/me", if let Some(link) = active_nav_link {link == NavLink::Me} else {false}))
             }
         }
     }

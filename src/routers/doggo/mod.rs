@@ -163,7 +163,6 @@ pub fn doggo_router() -> Router<AppState> {
     Router::<AppState>::new()
         .route("/", get(
             |State(state): State<AppState>, Extension(context): Extension<AppContext>| async move {
-                println!("ip {:?}", context.client_ip);
                 base(
                     html! {
                         (game_board(context.user_id, &state.pool, None).await)
