@@ -47,7 +47,20 @@ pub async fn auth<B>(
     .fetch_optional(&state.pool)
     .await;
     let user_id = if let Ok(Some(record)) = user_id {
-        record.user_id
+        let used_email_token = sqlx::query!("SELECT user.id AS email_haver_id FROM email_token INNER JOIN user ON email_token.email = user.email WHERE email_token.sender_id = $1 AND email_token.used = true AND email_token.created_at > datetime('now', '-30 minutes')", record.user_id)
+            .fetch_optional(&state.pool).await.unwrap();
+
+        if let Some(used_email_token) = used_email_token {
+            if used_email_token.email_haver_id != record.user_id {
+                new_auth_token =
+                    Some(create_new_auth_token(&state.pool, used_email_token.email_haver_id).await);
+                used_email_token.email_haver_id
+            } else {
+                record.user_id
+            }
+        } else {
+            record.user_id
+        }
     } else {
         let new_user = sqlx::query!("INSERT INTO user DEFAULT VALUES RETURNING id")
             .fetch_one(&state.pool)
@@ -79,11 +92,14 @@ pub async fn auth<B>(
     let mut response = next.run(req).await;
 
     if let Some(token) = new_auth_token {
-        // Set the updated cookie in the response
-        response.headers_mut().insert(
-            http::header::SET_COOKIE,
-            create_new_auth_cookie(token).parse().unwrap(),
-        );
+        // don't want to overwrite any set-cookie header set by the handler
+        if response.headers().get(http::header::SET_COOKIE).is_none() {
+            // Set the updated cookie in the response
+            response.headers_mut().insert(
+                http::header::SET_COOKIE,
+                create_new_auth_cookie(token).parse().unwrap(),
+            );
+        }
     }
 
     Ok(response)
@@ -100,6 +116,7 @@ pub fn create_new_auth_cookie(token: String) -> String {
 
 pub async fn create_new_auth_token(pool: &Pool<Sqlite>, user_id: i64) -> String {
     let new_token = Uuid::new_v4().to_string();
+    println!("creating new auth token {} for user {}", new_token, user_id);
     let _ = sqlx::query!(
         "INSERT INTO session (token, user_id) VALUES ($1, $2)",
         new_token,

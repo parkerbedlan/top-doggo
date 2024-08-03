@@ -51,7 +51,7 @@ pub fn me_router() -> Router<AppState> {
 
                 // TODO: rate limit the email
 
-                let email_sent = send_magic_link_email(&state.pool, &form.email_address).await;
+                let email_sent = send_magic_link_email(&state.pool, context.user_id, &form.email_address).await;
                 if email_sent.is_err() {
                     return err("Invalid Email");
                 }
@@ -71,10 +71,10 @@ pub fn me_router() -> Router<AppState> {
             println!("Logging in...");
             println!("token: {}", params.token);
 
-            let token_email = sqlx::query!("SELECT email FROM email_token WHERE token=$1 AND created_at > datetime('now', '-30 minutes')", params.token)
+            let token_record = sqlx::query!("SELECT email, sender_id FROM email_token WHERE token=$1 AND created_at > datetime('now', '-30 minutes')", params.token)
                 .fetch_optional(&state.pool)
                 .await.unwrap();
-            if token_email.is_none() {
+            if token_record.is_none() {
                 return (
                     StatusCode::TEMPORARY_REDIRECT,
                     {
@@ -84,7 +84,8 @@ pub fn me_router() -> Router<AppState> {
                     }
                 )
             }
-            let token_email = token_email.unwrap().email;
+            let token_email = (token_record.as_ref().unwrap().email).clone();
+            let sender_id = (token_record.as_ref().unwrap().sender_id.expect("All email_token records should have a sender_id")).clone();
 
             if let Some(current_email) = context.user_email {
                 if current_email != token_email {
@@ -107,13 +108,15 @@ pub fn me_router() -> Router<AppState> {
                     )
                 }
             }
+
+            let _ = sqlx::query!("UPDATE email_token SET used = true WHERE token = $1", params.token).fetch_one(&state.pool).await;
             
             let existing_user = sqlx::query!("SELECT id FROM user WHERE email = $1", token_email)
                 .fetch_optional(&state.pool).await.unwrap();
 
             if let Some(existing_user) = existing_user {
                 // log in
-                let new_auth_token = create_new_auth_token(&state.pool, existing_user.id).await;
+                println!("logging in receiver user {} as existing user {}, who has email {}", context.user_id, existing_user.id, token_email);
 
                 let client_ip: Option<String> = context.client_ip.map(|ip| ip.to_string());
                 let notes = format!("{} {}", token_email, context.user_id);
@@ -125,29 +128,31 @@ pub fn me_router() -> Router<AppState> {
                     {
                         let mut headers = HeaderMap::new();
                         headers.insert(header::LOCATION, "/me".parse().unwrap());
-                        headers.insert(header::SET_COOKIE, create_new_auth_cookie(new_auth_token).parse().unwrap());
+                        headers.insert(header::SET_COOKIE, create_new_auth_cookie(create_new_auth_token(&state.pool, existing_user.id).await).parse().unwrap());
                         headers
                     }
                 )
             } else {
-               // sign up
-                let _ = sqlx::query!("UPDATE user SET email = $1, total_xp = total_xp + 2000 WHERE id = $2", token_email, context.user_id).fetch_one(&state.pool).await;
+               // sign up (tie email to sender)
+                println!("receiver user {} signing up sender user {} with email {}", context.user_id, sender_id, token_email);
+
+                let _ = sqlx::query!("UPDATE user SET email = $1, total_xp = total_xp + 2000 WHERE id = $2", token_email, sender_id).fetch_one(&state.pool).await;
 
                 let client_ip: Option<String> = context.client_ip.map(|ip| ip.to_string());
                 let _ = sqlx::query!("INSERT INTO log (action, user_id, client_ip, notes) VALUES ('sign-up', $1, $2, $3)", context.user_id, client_ip, token_email)
                     .fetch_one(&state.pool).await;
-
 
                 return (
                     StatusCode::TEMPORARY_REDIRECT,
                     {
                         let mut headers = HeaderMap::new();
                         headers.insert(header::LOCATION, "/me?new_user=true".parse().unwrap());
+                        if context.user_id != sender_id {
+                            headers.insert(header::SET_COOKIE, create_new_auth_cookie(create_new_auth_token(&state.pool, sender_id).await).parse().unwrap());
+                        }
                         headers
                     }
                 )
-
-
             }
         }))
         .route("/sorry", get(|Extension(context): Extension<AppContext>, Query(params): Query<SorryParams>| async move {
@@ -214,7 +219,7 @@ async fn send_email(to_mailbox: Mailbox, subject: &str, content: Markup) -> Resu
 
     Ok(())
 }
-async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> Result<(), ()> {
+async fn send_magic_link_email(pool: &Pool<Sqlite>, sender_id: i64, to_email_address: &str) -> Result<(), ()> {
     let to_mailbox: Result<Mailbox, AddressError> =
         format!("Top Doggo Judge <{}>", to_email_address).parse();
     if to_mailbox.is_err() {
@@ -224,9 +229,10 @@ async fn send_magic_link_email(pool: &Pool<Sqlite>, to_email_address: &str) -> R
 
     let magic_token = Uuid::new_v4().to_string();
     let _ = sqlx::query!(
-        "INSERT INTO email_token (token, email) VALUES ($1, $2)",
+        "INSERT INTO email_token (token, email, sender_id) VALUES ($1, $2, $3)",
         magic_token,
-        to_email_address
+        to_email_address,
+        sender_id
     )
     .fetch_one(pool)
     .await;
@@ -294,8 +300,8 @@ struct MeParams {
     new_user: Option<bool>
 }
 async fn me_page_content(state: AppState, context: AppContext, params: MeParams) -> Markup {
-    let recently_sent_magic_link = sqlx::query!("SELECT COUNT(*) AS recently_sent FROM log WHERE action='send-magic-link' AND user_id=$1 AND created_at > datetime('now', '-5 minutes')", context.user_id)
-        .fetch_one(&state.pool).await.unwrap().recently_sent == 1;
+    let recently_sent_magic_link = sqlx::query!("SELECT COUNT(*) AS recently_sent FROM email_token WHERE sender_id=$1 AND created_at > datetime('now', '-5 minutes')", context.user_id)
+        .fetch_one(&state.pool).await.unwrap().recently_sent != 0;
 
     html! {
         div
