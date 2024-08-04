@@ -4,17 +4,16 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 pub fn base(
     content: Markup,
     title: Option<String>,
-    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
 ) -> impl IntoResponse {
-    Html(layout(content, title, active_nav_link).into_string())
+    Html(layout(content, title, active_nav_link, false).into_string())
 }
 
 pub fn layout(
     content: Markup,
     title: Option<String>,
-    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
+    hide_navbar: bool,
 ) -> Markup {
     let formatted_title = if title.is_none() {
         "Top Doggo".to_string()
@@ -55,7 +54,6 @@ pub fn layout(
             title {(formatted_title)}
             meta name="HandheldFriendly" content="true" ;
             meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" ;
-            // (head.unwrap_or(html!{}))
 
             // link preview meta tags generated with https://metatags.io
             // primary link preview meta tags
@@ -83,9 +81,8 @@ pub fn layout(
                 (spinner_icon())
             }
             {(content)}
-            (navbar(active_nav_link))
+            @if !hide_navbar {(navbar(active_nav_link))}
         }
-
     }
 }
 
@@ -104,7 +101,7 @@ fn navbar(active_nav_link: Option<NavLink>) -> Markup {
                 (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(link) = active_nav_link {link == NavLink::Root} else {false}))
                 (nav_link(html! {div class="text-9xl text-secondary" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
                 (nav_link(html! {div class="text-9xl text-accent" {(upload_icon())}}, "/upload", if let Some(link) = active_nav_link {link == NavLink::Upload} else {false}))
-                // (nav_link(html! {div class="text-9xl text-accent" {(me_icon())}}, "/me", if let Some(link) = active_nav_link {link == NavLink::Me} else {false}))
+                (nav_link(html! {div class="text-9xl text-accent" {(me_icon())}}, "/me", if let Some(link) = active_nav_link {link == NavLink::Me} else {false}))
             }
         }
     }

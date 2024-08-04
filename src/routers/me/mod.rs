@@ -1,6 +1,6 @@
 use super::doggo::xp::xp_section;
 use crate::{
-    auth::{create_new_auth_cookie, create_new_auth_token}, layout::{base, NavLink}, routers::doggo::xp::get_xp, AppContext, AppState, FormField
+    auth::{create_new_auth_cookie, create_new_auth_token}, layout::{base, layout, NavLink}, routers::doggo::xp::get_xp, AppContext, AppState, FormField
 };
 use axum::{
     extract::{Query, State}, http::{header, HeaderMap, StatusCode}, response::Html, routing::{get, post}, Extension, Form, Router
@@ -60,7 +60,7 @@ pub fn me_router() -> Router<AppState> {
                 let _ = sqlx::query!("INSERT INTO log (action, user_id, client_ip, notes) VALUES ('send-magic-link', $1, $2, $3)", context.user_id, client_ip, form.email_address)
                     .fetch_one(&state.pool).await;
 
-                return Html(email_sent_message().into_string())
+                return Html(email_sent_message(form.email_address.to_string()).into_string())
             })
         )
         .route("/login", get(|
@@ -69,8 +69,7 @@ pub fn me_router() -> Router<AppState> {
             Query(params): Query<LoginParams>
         | async move {
             println!("/login");
-            println!("using token: {}", params.token);
-            println!("context.user_id: {}", context.user_id);
+            println!("using email_token: {}", params.token);
 
             let token_record = sqlx::query!("SELECT email, sender_id FROM email_token WHERE token=$1 AND created_at > datetime('now', '-30 minutes')", params.token)
                 .fetch_optional(&state.pool)
@@ -82,7 +81,8 @@ pub fn me_router() -> Router<AppState> {
                         let mut headers = HeaderMap::new();
                         headers.insert(header::LOCATION, "/sorry?reason=expired_or_does_not_exist".parse().unwrap());
                         headers
-                    }
+                    },
+                    Html("".to_string())
                 )
             }
             let token_email = (token_record.as_ref().unwrap().email).clone();
@@ -96,7 +96,8 @@ pub fn me_router() -> Router<AppState> {
                             let mut headers = HeaderMap::new();
                             headers.insert(header::LOCATION, "/sorry?reason=already_logged_in".parse().unwrap());
                             headers
-                        }
+                        },
+                        Html("".to_string())
                     )
                 } else {
                     println!("Already logged in as {}, redirecting to /me", token_email);
@@ -106,7 +107,8 @@ pub fn me_router() -> Router<AppState> {
                             let mut headers = HeaderMap::new();
                             headers.insert(header::LOCATION, "/me".parse().unwrap());
                             headers
-                        }
+                        },
+                        Html("".to_string())
                     )
                 }
             }
@@ -126,13 +128,13 @@ pub fn me_router() -> Router<AppState> {
                     .fetch_one(&state.pool).await;
 
                 return (
-                    StatusCode::TEMPORARY_REDIRECT,
+                    StatusCode::OK,
                     {
                         let mut headers = HeaderMap::new();
-                        headers.insert(header::LOCATION, "/me".parse().unwrap());
                         headers.insert(header::SET_COOKIE, create_new_auth_cookie(create_new_auth_token(&state.pool, existing_user.id).await).parse().unwrap());
                         headers
-                    }
+                    },
+                    Html(logged_in_page().into_string())
                 )
             } else {
                // sign up (tie email to sender)
@@ -145,15 +147,15 @@ pub fn me_router() -> Router<AppState> {
                     .fetch_one(&state.pool).await;
 
                 return (
-                    StatusCode::TEMPORARY_REDIRECT,
+                    StatusCode::OK,
                     {
                         let mut headers = HeaderMap::new();
-                        headers.insert(header::LOCATION, "/me?new_user=true".parse().unwrap());
                         if context.user_id != sender_id {
                             headers.insert(header::SET_COOKIE, create_new_auth_cookie(create_new_auth_token(&state.pool, sender_id).await).parse().unwrap());
                         }
                         headers
-                    }
+                    },
+                    Html(logged_in_page().into_string())
                 )
             }
         }))
@@ -243,7 +245,7 @@ async fn send_magic_link_email(pool: &Pool<Sqlite>, sender_id: i64, to_email_add
         html!{
             h1 {"Magic Link for Top Doggo"}
             h3 {"Follow this link to log in to the platform:"}
-            a href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
+            a target="_blank" href={ (env::var("BASE_URL").unwrap()) "/login?token=" (magic_token)} style="font-size: 1.5rem;" {"Log In"}
         }
     ).await
 }
@@ -261,8 +263,8 @@ fn send_magic_link_form(email_address: FormField<String>) -> Markup {
         class="gap-4 flex flex-col items-center"
     {
         div class="flex gap-1 flex-wrap text-center justify-center" {
-            p {"Log in with email to save your progress! "}
-            p {(PreEscaped("&nbsp;"))"( and earn 2000xp the first time :O )"}
+            p {"Log in with email to save/load your progress! "}
+            p {(PreEscaped("&nbsp;"))"( and earn 2000xp if it's your first time :O )"}
         }
         div class="flex gap-2 flex-wrap max-w-screen-sm justify-center" {
             div class="flex flex-col max-w-72 min-w-52 basis-52 shrink grow items-start" {
@@ -302,8 +304,8 @@ struct MeParams {
     new_user: Option<bool>
 }
 async fn me_page_content(state: AppState, context: AppContext, params: MeParams) -> Markup {
-    let recently_sent_magic_link = sqlx::query!("SELECT COUNT(*) AS recently_sent FROM email_token WHERE sender_id=$1 AND created_at > datetime('now', '-5 minutes')", context.user_id)
-        .fetch_one(&state.pool).await.unwrap().recently_sent != 0;
+    let recently_sent_magic_link = sqlx::query!("SELECT email FROM email_token WHERE sender_id=$1 AND created_at > datetime('now', '-1 minutes')", context.user_id)
+        .fetch_one(&state.pool).await;
 
     html! {
         div
@@ -317,8 +319,8 @@ async fn me_page_content(state: AppState, context: AppContext, params: MeParams)
             @if let Some(email) = context.user_email {
                 h1 class="text-2xl"
                 {"You're currently logged in with the email "(email)" :)"}
-            } @else if recently_sent_magic_link {
-                (email_sent_message())
+            } @else if recently_sent_magic_link.is_ok() {
+                (email_sent_message(recently_sent_magic_link.unwrap().email))
             } @else {
                 (send_magic_link_form(FormField::empty()))
             }
@@ -332,8 +334,20 @@ async fn me_page_content(state: AppState, context: AppContext, params: MeParams)
     }
 }
 
-fn email_sent_message() -> Markup {
+fn email_sent_message(email: String) -> Markup {
     html! {
-        h1 class="text-5xl" { "Email sent. Check your inbox!" }
+        div class="flex flex-col gap-4 items-center justify-center" {
+            h1 class="text-4xl" { "Email sent to "(email)". Check your inbox!" }
+            h2 class="text-2xl" { "Also make sure to check your spam folder :P" }
+        }
     }
+}
+
+fn logged_in_page() -> Markup {
+    layout(html!{
+        div class="flex-1 flex flex-col gap-4 items-center justify-center text-center" {
+            h1 class="text-4xl" {"Successfully verified your email!"}
+            h2 class="text-2xl" {"(You can close this tab)"}
+        }
+    }, None, None, true)
 }

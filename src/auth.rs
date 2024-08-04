@@ -36,10 +36,11 @@ pub async fn auth<B>(
             })
         })
         .unwrap_or_default();
-    println!(
-        "{}: authing request, original auth token is {}",
-        original_auth_token, original_auth_token
-    );
+    println!("-------------------------------------------------");
+    // println!(
+    //     "{}: authing request, original auth token is {}",
+    //     original_auth_token, original_auth_token
+    // );
 
     let mut new_auth_token: Option<String> = None;
 
@@ -55,19 +56,19 @@ pub async fn auth<B>(
 
         if let Some(used_email_token) = used_email_token {
             if used_email_token.email_haver_id != record.user_id {
-                println!(
-                    "{}: user {} found used email_token, setting new_auth_token to email haver {}",
-                    original_auth_token, record.user_id, used_email_token.email_haver_id
-                );
+                // println!(
+                //     "{}: user {} found used email_token, setting new_auth_token to email haver {}",
+                //     original_auth_token, record.user_id, used_email_token.email_haver_id
+                // );
                 new_auth_token =
                     Some(create_new_auth_token(&state.pool, used_email_token.email_haver_id).await);
                 used_email_token.email_haver_id
             } else {
-                println!("{}: user {} found used email_token, but we're already the email haver so not doing anything fancy", original_auth_token, record.user_id);
+                // println!("{}: user {} found used email_token, but we're already the email haver so not doing anything fancy", original_auth_token, record.user_id);
                 record.user_id
             }
         } else {
-            println!("{}: user {}", original_auth_token, record.user_id);
+            // println!("{}: user {}", original_auth_token, record.user_id);
             record.user_id
         }
     } else {
@@ -79,10 +80,10 @@ pub async fn auth<B>(
 
         new_auth_token = Some(create_new_auth_token(&state.pool, new_user_id).await);
 
-        println!(
-            "{}: created new user {} with token {:?}",
-            original_auth_token, new_user_id, new_auth_token
-        );
+        // println!(
+        //     "{}: created new user {} with token {:?}",
+        //     original_auth_token, new_user_id, new_auth_token
+        // );
 
         new_user_id
     };
@@ -101,16 +102,12 @@ pub async fn auth<B>(
         user_email,
         client_ip,
     };
-    println!("{}: context: {:?}", original_auth_token, app_context);
+    println!("{:?}", app_context);
     req.extensions_mut().insert(app_context);
 
     let mut response = next.run(req).await;
 
     if let Some(token) = new_auth_token {
-        println!(
-            "{}: (after the handler) new_auth_token: {:?}",
-            original_auth_token, token
-        );
         println!(
             "{}: auth token already set by handler: {:?}",
             original_auth_token,
