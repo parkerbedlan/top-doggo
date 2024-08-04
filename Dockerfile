@@ -12,6 +12,7 @@ RUN apk add --no-cache musl-dev openssl-dev openssl-libs-static
 # RUN apt-get update && apt-get install -y sqlite3 libsqlite3-dev
 # RUN sqlite3 --version
 
+
 COPY Cargo.* ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
@@ -20,7 +21,7 @@ RUN rm -f src/main.rs
 # if you wanna builds the schema file in the image instead of copying it over from host machine
 RUN mkdir .cargo
 RUN cargo install sqlx-cli --root .cargo
-COPY .env ./
+COPY .env.prod .env
 COPY ./migrations/ ./migrations/
 RUN mkdir db
 RUN .cargo/bin/sqlx db create

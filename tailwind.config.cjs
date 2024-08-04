@@ -40,5 +40,25 @@ const config = {
     },
   },
   plugins: [require("daisyui"), forms({ strategy: "class" }), typography],
+  daisyui: {
+    themes: [
+      {
+        light: {
+          ...require("daisyui/src/theming/themes")["light"],
+          primary: "#9333ea",
+          secondary: "#eab308",
+          accent: "#22c55e",
+        },
+      },
+      {
+        dark: {
+          ...require("daisyui/src/theming/themes")["dark"],
+          primary: "#9333ea",
+          secondary: "#eab308",
+          accent: "#22c55e",
+        },
+      },
+    ],
+  },
 };
 module.exports = config;

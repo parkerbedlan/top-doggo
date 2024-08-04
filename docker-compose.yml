@@ -1,38 +1,38 @@
 services:
-  top-doggo-2:
-    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.26'
+  top-doggo:
+    network_mode: host
+    image: 'ghcr.io/parkerbedlan/top-doggo:0.1.35'
     volumes:
       - '/root/top-doggo/db:/db'
       - '/root/top-doggo/images:/assets/images'
       - '/root/top-doggo/unapproved:/unapproved'
     networks:
-      csocgok: null
+      rc4ooos: null
     labels:
       - coolify.managed=true
       - coolify.version=4.0.0-beta.306
       - coolify.serviceId=1
       - coolify.type=service
-      - coolify.name=top-doggo-2-csocgok
+      - coolify.name=top-doggo-rc4ooos
       - coolify.pullRequestId=0
       - coolify.service.subId=1
       - coolify.service.subType=application
       - traefik.enable=true
-      # - 'traefik.http.routers.top-doggo-2.rule=Host(`topdoggo.app`) || Host(`www.topdoggo.app`) || Host(`doggo.parkerbedlan.com`)'
-      - 'traefik.http.routers.top-doggo-2.rule=Host(`topdoggo.app`) || Host(`www.topdoggo.app`)'
-      - traefik.http.routers.top-doggo-2.entrypoints=https
-      - traefik.http.routers.top-doggo-2.tls=true
-      - traefik.http.routers.top-doggo-2.tls.certresolver=letsencrypt
-      - traefik.http.services.top-doggo-2.loadbalancer.server.port=3000
-      - 'traefik.http.middlewares.top-doggo-2-redirect.redirectregex.regex=^https?://(www\.topdoggo\.app|doggo\.parkerbedlan\.com)(.*)'
-      - 'traefik.http.middlewares.top-doggo-2-redirect.redirectregex.replacement=https://topdoggo.app${2}'
-      # - traefik.http.middlewares.top-doggo-2-redirect.redirectregex.permanent=true
-      - traefik.http.routers.top-doggo-2.middlewares=top-doggo-2-redirect
+      - 'traefik.http.routers.top-doggo.rule=Host(`topdoggo.app`) || Host(`www.topdoggo.app`) || Host(`doggo.parkerbedlan.com`)'
+      - traefik.http.routers.top-doggo.entrypoints=https
+      - traefik.http.routers.top-doggo.tls=true
+      - traefik.http.routers.top-doggo.tls.certresolver=letsencrypt
+      - traefik.http.services.top-doggo.loadbalancer.server.port=3000
+      - 'traefik.http.middlewares.top-doggo-redirect.redirectregex.regex=^https?://(www\.topdoggo\.app|doggo\.parkerbedlan\.com)(.*)'
+      - 'traefik.http.middlewares.top-doggo-redirect.redirectregex.replacement=https://topdoggo.app${2}'
+      # - traefik.http.middlewares.top-doggo-redirect.redirectregex.permanent=true
+      - traefik.http.routers.top-doggo.middlewares=top-doggo-redirect
     restart: unless-stopped
-    container_name: top-doggo-2-csocgok
+    container_name: top-doggo-rc4ooos
     environment:
-      COOLIFY_CONTAINER_NAME: top-doggo-2-csocgok
+      COOLIFY_CONTAINER_NAME: top-doggo-rc4ooos
 volumes: {  }
 networks:
-  csocgok:
-    name: csocgok
+  rc4ooos:
+    name: rc4ooos
     external: true

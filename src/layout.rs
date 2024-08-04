@@ -4,17 +4,16 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 pub fn base(
     content: Markup,
     title: Option<String>,
-    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
 ) -> impl IntoResponse {
-    Html(layout(content, title, active_nav_link).into_string())
+    Html(layout(content, title, active_nav_link, false).into_string())
 }
 
 pub fn layout(
     content: Markup,
     title: Option<String>,
-    // head: Option<Markup>,
     active_nav_link: Option<NavLink>,
+    hide_navbar: bool,
 ) -> Markup {
     let formatted_title = if title.is_none() {
         "Top Doggo".to_string()
@@ -37,7 +36,8 @@ pub fn layout(
                         document.addEventListener("DOMContentLoaded", () => {
                             htmx.config.useTemplateFragments = true;
                             // https://htmx.org/events/
-                            // htmx.logAll() in console to see all the events as they happen!
+                            // to see all the events as they happen
+                            // htmx.logAll()
                             document.body.addEventListener("htmx:beforeSwap", (event) => {
                                 if (event.detail.xhr.status === 422) {
                                     event.detail.shouldSwap = true;
@@ -47,14 +47,13 @@ pub fn layout(
                             })
                         })
                 "#))}
-            // script src="https://unpkg.com/hyperscript.org@0.9.12" {}
+            script src="https://unpkg.com/hyperscript.org@0.9.12" {}
             // FOR PROD comment out the tailwind cdn
             // script src="https://cdn.tailwindcss.com" {}
             link rel="stylesheet" href="/output.css";
             title {(formatted_title)}
             meta name="HandheldFriendly" content="true" ;
             meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" ;
-            // (head.unwrap_or(html!{}))
 
             // link preview meta tags generated with https://metatags.io
             // primary link preview meta tags
@@ -82,9 +81,8 @@ pub fn layout(
                 (spinner_icon())
             }
             {(content)}
-            (navbar(active_nav_link))
+            @if !hide_navbar {(navbar(active_nav_link))}
         }
-
     }
 }
 
@@ -92,7 +90,8 @@ pub fn layout(
 pub enum NavLink {
     Root,
     Leaderboard,
-    Upload, // Me
+    Upload,
+    Me,
 }
 
 fn navbar(active_nav_link: Option<NavLink>) -> Markup {
@@ -100,8 +99,9 @@ fn navbar(active_nav_link: Option<NavLink>) -> Markup {
         footer id="navbar" class="fixed bottom-0 left-0 right-0 h-16 bg-base-200 flex justify-center items-center border-base-100 border-t vt-stay-on-top2" {
             div class="w-full h-full flex justify-around items-center max-w-screen-lg" {
                 (nav_link(html! {div class="text-2xl" {"🐶"}}, "/", if let Some(link) = active_nav_link {link == NavLink::Root} else {false}))
-                (nav_link(html! {div class="text-9xl text-yellow-500" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
-                (nav_link(html! {div class="text-9xl text-green-500" {(upload_icon())}}, "/upload", if let Some(link) = active_nav_link {link == NavLink::Upload} else {false}))
+                (nav_link(html! {div class="text-9xl text-secondary" {(trophy_icon())}}, "/leaderboard", if let Some(link) = active_nav_link {link == NavLink::Leaderboard} else {false}))
+                (nav_link(html! {div class="text-9xl text-accent" {(upload_icon())}}, "/upload", if let Some(link) = active_nav_link {link == NavLink::Upload} else {false}))
+                (nav_link(html! {div class="text-9xl text-accent" {(me_icon())}}, "/me", if let Some(link) = active_nav_link {link == NavLink::Me} else {false}))
             }
         }
     }
@@ -109,7 +109,7 @@ fn navbar(active_nav_link: Option<NavLink>) -> Markup {
 
 fn nav_link(content: Markup, href: &str, active: bool) -> Markup {
     html! {
-        a class={ "w-full h-full hover:bg-base-300 active:scale-90 transition-all duration-75 flex items-center justify-center border-purple-600" @if active {" border-b-4"}}
+        a class={ "w-full h-full hover:bg-base-300 active:scale-90 transition-all duration-75 flex items-center justify-center border-primary" @if active {" border-b-4"}}
         href=(href)
         style={@if active {""} @else {"-webkit-filter: grayscale(1)"}} {
             (content)
@@ -137,6 +137,14 @@ fn spinner_icon() -> Markup {
     html! {
         svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8" {
             path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" ;
+        }
+    }
+}
+
+fn me_icon() -> Markup {
+    html! {
+        svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6" {
+            path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clip-rule="evenodd" ;
         }
     }
 }

@@ -18,4 +18,5 @@ assets/input.css
 assets/images
 unapproved
 
-# .env
+.env
+.env.example

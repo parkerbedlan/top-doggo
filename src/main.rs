@@ -22,6 +22,7 @@ pub struct AppState {
 #[derive(Debug, Clone)]
 struct AppContext {
     user_id: i64,
+    user_email: Option<String>,
     client_ip: Option<std::net::IpAddr>,
 }
 
@@ -40,6 +41,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .nest("/leaderboard", routers::leaderboard())
         .nest("/", routers::doggo())
         .nest("/upload", routers::upload())
+        .nest("/", routers::me())
+        .nest("/test", routers::test::test_router())
         .fallback_service(ServeDir::new("assets"))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::auth))
         .layer(TraceLayer::new_for_http())
