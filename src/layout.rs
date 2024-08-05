@@ -32,6 +32,7 @@ pub fn layout(
             // https://www.srihash.org/
             // https://htmx.org/docs/#installing
             script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous" {}
+            script src="https://unpkg.com/htmx-ext-preload@2.0.0/preload.js" {}
             script {(PreEscaped(r#"
                         document.addEventListener("DOMContentLoaded", () => {
                             htmx.config.useTemplateFragments = true;
@@ -74,7 +75,7 @@ pub fn layout(
             meta property="twitter:description" content=(description);
             meta property="twitter:image" content=(image);
         }
-        body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-boost="true" hx-indicator="#spinner" {
+        body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-boost="true" hx-indicator="#spinner" hx-ext="preload" {
             div
                 id="spinner"
                 class="animate-spin fixed top-1 left-1 z-50 rounded-full bg-base-100 htmx-indicator" {
@@ -109,9 +110,13 @@ fn navbar(active_nav_link: Option<NavLink>) -> Markup {
 
 fn nav_link(content: Markup, href: &str, active: bool) -> Markup {
     html! {
-        a class={ "w-full h-full hover:bg-base-300 active:scale-90 transition-all duration-75 flex items-center justify-center border-primary" @if active {" border-b-4"}}
-        href=(href)
-        style={@if active {""} @else {"-webkit-filter: grayscale(1)"}} {
+        a
+            class={ "w-full h-full hover:bg-base-300 active:scale-90 transition-all duration-75 flex items-center justify-center border-primary" @if active {" border-b-4"}}
+            href=(href)
+            style={@if active {""} @else {"-webkit-filter: grayscale(1)"}}
+            preload="preload:init"
+            preload-images="true"
+        {
             (content)
         }
     }
