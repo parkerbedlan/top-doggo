@@ -74,7 +74,7 @@ pub fn layout(
             meta property="twitter:description" content=(description);
             meta property="twitter:image" content=(image);
         }
-        body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-boost="true" hx-indicator="#spinner" {
+        body class="max-w-screen-2xl mx-auto pb-16 min-h-[100dvh] flex flex-col font-shantell overflow-x-hidden" hx-indicator="#spinner" {
             div
                 id="spinner"
                 class="animate-spin fixed top-1 left-1 z-50 rounded-full bg-base-100 htmx-indicator" {
