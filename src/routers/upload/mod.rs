@@ -11,7 +11,9 @@ use axum::{
     Extension, Router,
 };
 use maud::{html, Markup, PreEscaped};
-use std::{fs, path::Path};
+use std::{env, fs, path::Path};
+
+use super::me::send_email;
 
 pub fn upload_router() -> Router<AppState> {
     Router::<AppState>::new().route(
@@ -168,6 +170,8 @@ pub fn upload_router() -> Router<AppState> {
                 )
                 .fetch_one(&state.pool)
                 .await;
+                
+                let _ = send_email(format!("Top Doggo Admin <{}>", env::var("ADMIN_EMAIL").expect("ADMIN_EMAIL should be set")).parse().unwrap(), "A dog has been uploaded", html!{"Well ain't that nifty!"}).await;
 
                 Html(html!{
                     div class="flex-1 flex flex-col gap-4 items-center justify-center text-center" {

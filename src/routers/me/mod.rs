@@ -179,7 +179,7 @@ pub fn me_router() -> Router<AppState> {
         }))
 }
 
-async fn send_email(to_mailbox: Mailbox, subject: &str, content: Markup) -> Result<(), ()> {
+pub async fn send_email(to_mailbox: Mailbox, subject: &str, content: Markup) -> Result<(), ()> {
     let mode = env::var("MODE").unwrap();
     if mode == "development" {
         println!("Email that would be sent: {:?}{:?}", to_mailbox, content);
