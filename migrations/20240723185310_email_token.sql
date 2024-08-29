@@ -1,5 +1,0 @@
-CREATE TABLE email_token (
-    created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
-    token TEXT PRIMARY KEY NOT NULL,
-    email TEXT NOT NULL
-);
