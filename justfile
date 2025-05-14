@@ -21,7 +21,7 @@ clippy:
 remove-imports: clippy
 
 dev:
-    tmux new-session -d -s top-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t top-doggo
+    tmux new-session -d -s top-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'nix develop' Enter 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t top-doggo
 
 # docker image ls # to determine the last version tag used
 # docker build -t parkerbedlan/top-doggo:0.0.19 .
@@ -46,3 +46,6 @@ ssh:
 
 ssh-db:
     scp root@5.161.95.82:/root/top-doggo/db/* . && sqlite3 top-doggo.db && rm top-doggo.db*
+
+nd:
+    nix develop
