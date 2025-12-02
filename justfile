@@ -1,3 +1,12 @@
+dev:
+    tmux new-session -d -s top-doggo \; send-keys 'vim .' Enter \; new-window \; \
+    send-keys 'nix develop -c just w' Enter \; new-window \; \
+    send-keys 'git pull' Enter \; new-window \; \
+    send-keys 'nix develop -c just db' Enter \; new-window \; \
+    send-keys 'just tww' Enter \; \
+    attach-session -t top-doggo
+
+
 tailwind-compile:
     npx tailwindcss -i ./assets/input.css -o ./assets/output.css
 tw: tailwind-compile
@@ -20,8 +29,6 @@ clippy:
     cargo clippy --fix --allow-dirty
 remove-imports: clippy
 
-dev:
-    tmux new-session -d -s top-doggo \; send-keys 'vim .' Enter \; new-window \; send-keys 'nix develop' Enter 'just w' Enter \; new-window \; send-keys 'git pull' Enter \; new-window \; send-keys 'just db' Enter \; new-window \; send-keys 'just tww' Enter \; attach-session -t top-doggo
 
 # docker image ls # to determine the last version tag used
 # docker build -t parkerbedlan/top-doggo:0.0.19 .
